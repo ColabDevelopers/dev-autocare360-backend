@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -21,6 +23,26 @@ public class GlobalExceptionHandler {
 		body.put("error", "Not Found");
 		body.put("message", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+	}
+
+	@ExceptionHandler({AuthenticationException.class, BadCredentialsException.class})
+	public ResponseEntity<Object> handleAuthentication(AuthenticationException ex) {
+		Map<String, Object> body = new HashMap<>();
+		body.put("timestamp", Instant.now());
+		body.put("status", 401);
+		body.put("error", "Unauthorized");
+		body.put("message", "Invalid email or password");
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+	}
+
+	@ExceptionHandler(RuntimeException.class)
+	public ResponseEntity<Object> handleRuntime(RuntimeException ex) {
+		Map<String, Object> body = new HashMap<>();
+		body.put("timestamp", Instant.now());
+		body.put("status", 400);
+		body.put("error", "Bad Request");
+		body.put("message", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
