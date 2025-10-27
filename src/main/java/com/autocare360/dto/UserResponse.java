@@ -18,6 +18,9 @@ public class UserResponse {
 	private String name;
 	private List<String> roles; // lower-case: admin/employee/customer
 	private String status; // Active/Inactive
+	private String phone; // optional
+	private String employeeNo; // employees only
+	private String department; // employees only
 }
 
 

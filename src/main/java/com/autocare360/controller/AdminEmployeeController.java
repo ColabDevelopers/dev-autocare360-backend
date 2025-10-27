@@ -45,6 +45,12 @@ public class AdminEmployeeController {
 	public EmployeeResponse resetPassword(@PathVariable Long id) {
 		return employeeService.resetPassword(id);
 	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
+		employeeService.delete(id);
+		return ResponseEntity.noContent().build();
+	}
 }
 
 

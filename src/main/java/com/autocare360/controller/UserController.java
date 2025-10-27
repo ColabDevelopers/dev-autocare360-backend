@@ -35,6 +35,26 @@ public class UserController {
 		return ResponseEntity.ok(userService.getCurrent(userId));
 	}
 
+	@org.springframework.web.bind.annotation.PatchMapping("/me")
+	public ResponseEntity<Void> updateMe(
+			@RequestHeader(value = "Authorization", required = false) String authorization,
+			@org.springframework.web.bind.annotation.RequestBody java.util.Map<String, Object> body) {
+		if (authorization == null || !authorization.startsWith("Bearer ")) {
+			return ResponseEntity.status(401).build();
+		}
+		String token = authorization.substring(7);
+		if (!jwtService.isTokenValid(token)) {
+			return ResponseEntity.status(401).build();
+		}
+		Long userId = Long.valueOf(jwtService.extractSubject(token));
+		Object phone = body.get("phone");
+		if (phone == null || !(phone instanceof String) || body.size() != 1) {
+			return ResponseEntity.badRequest().build();
+		}
+		userService.updatePhone(userId, (String) phone);
+		return ResponseEntity.noContent().build();
+	}
+
 	@PostMapping("/change-password")
 	public ResponseEntity<Void> changePassword(
 			@RequestHeader(value = "Authorization", required = false) String authorization,
