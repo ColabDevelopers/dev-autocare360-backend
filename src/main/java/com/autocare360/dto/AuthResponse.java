@@ -1,6 +1,5 @@
-package com.example.autocare360.dto.sample;
+package com.autocare360.dto;
 
-import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,11 +11,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SampleItemResponse {
-	private Long id;
-	private String name;
-	private String description;
-	private Instant createdAt;
+public class AuthResponse {
+	private String accessToken;
+	private String refreshToken; // optional
+	private Integer expiresIn; // seconds
+	private UserResponse user;
 }
 
 
