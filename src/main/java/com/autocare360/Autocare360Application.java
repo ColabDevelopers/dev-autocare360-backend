@@ -1,4 +1,4 @@
-package com.example.autocare360;
+package com.autocare360;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
