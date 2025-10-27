@@ -18,12 +18,16 @@ public class UserService {
 
 	public UserResponse getCurrent(Long userId) {
 		User user = userRepository.findById(userId).orElseThrow();
+		boolean isEmployee = user.getRoles().stream().anyMatch(r -> r.getName().equalsIgnoreCase("EMPLOYEE"));
 		return UserResponse.builder()
 				.id(user.getId())
 				.email(user.getEmail())
 				.name(user.getName())
 				.roles(user.getRoles().stream().map(r -> r.getName().toLowerCase(Locale.ROOT)).collect(Collectors.toList()))
 				.status(user.getStatus() == null ? "Active" : user.getStatus())
+				.phone(user.getPhone())
+				.employeeNo(isEmployee ? user.getEmployeeNo() : null)
+				.department(isEmployee ? user.getDepartment() : null)
 				.build();
 	}
 
@@ -33,6 +37,12 @@ public class UserService {
 			throw new IllegalArgumentException("Invalid current password");
 		}
 		user.setPasswordHash(passwordEncoder.encode(newPassword));
+		userRepository.save(user);
+	}
+
+	public void updatePhone(Long userId, String phone) {
+		User user = userRepository.findById(userId).orElseThrow();
+		user.setPhone(phone);
 		userRepository.save(user);
 	}
 }

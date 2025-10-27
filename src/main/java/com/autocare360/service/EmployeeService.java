@@ -59,8 +59,7 @@ public class EmployeeService {
 
 	@Transactional
 	public List<EmployeeResponse> list() {
-		return userRepository.findAll().stream()
-				.filter(u -> u.getRoles().stream().anyMatch(r -> r.getName().equals("EMPLOYEE")))
+		return userRepository.findDistinctByRoles_Name("EMPLOYEE").stream()
 				.map(this::toResponse)
 				.collect(Collectors.toList());
 	}
@@ -69,6 +68,12 @@ public class EmployeeService {
 	public EmployeeResponse get(Long id) {
 		User user = userRepository.findById(id).orElseThrow();
 		return toResponse(user);
+	}
+
+	@Transactional
+	public void delete(Long id) {
+		User user = userRepository.findById(id).orElseThrow();
+		userRepository.delete(user);
 	}
 
 	private String generateEmployeeNo() {
