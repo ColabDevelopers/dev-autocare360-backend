@@ -1,34 +1,46 @@
-name: Deploy to Dev
+name: Deploy to Staging
 
 on:
   push:
-    branches: [ main ]
+    branches: [ develop ]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: staging
 
     steps:
     - uses: actions/checkout@v4
+    
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
         cache: 'maven'
+    
     - name: Make mvnw executable
       run: chmod +x mvnw
+    
     - name: Build with Maven
       run: ./mvnw clean package -DskipTests
-    - name: Run Dependency Check
+    
+    - name: Run Security Scan
       uses: dependency-check/Dependency-Check_Action@main
       with:
         project: 'Autocare360 Backend'
         path: '.'
         format: 'ALL'
         out: 'reports'
+    
     - name: Build Docker image
-      run: docker build -f infra/docker/Dockerfile -t autocare360-backend:dev .
-    - name: Deploy to Dev Environment
-      run: echo "Deploy to dev environment"  # Add actual deployment steps
+      run: docker build -f infra/docker/Dockerfile -t autocare360-backend:staging-${{ github.sha }} .
+    
+    - name: Tag image
+      run: docker tag autocare360-backend:staging-${{ github.sha }} autocare360-backend:staging
+    
+    - name: Deploy to Staging Environment
+      run: echo "Deploy to staging environment using kubectl/helm"
+      # Add actual deployment steps here
+      # Example: kubectl apply -k infra/kubernetes/overlays/staging
