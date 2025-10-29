@@ -1,11 +1,14 @@
 package com.example.autocare360.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
@@ -48,7 +52,25 @@ public class Appointment {
     @Column(length = 1000)
     private String notes;
     
-    private String technician;
+    private String technician; // DEPRECATED: Keep for backward compatibility, use assignedEmployee instead
+    
+    // NEW: Proper employee reference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id")
+    @JsonIgnore
+    private Employee assignedEmployee;
+    
+    // NEW: Project tracking fields
+    @Column(name = "estimated_hours", precision = 5, scale = 2)
+    private BigDecimal estimatedHours;
+    
+    @Column(name = "actual_hours", precision = 5, scale = 2)
+    private BigDecimal actualHours = BigDecimal.ZERO;
+    
+    // NEW: Relationships for time tracking
+    @OneToMany(mappedBy = "appointment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<TimeLog> timeLogs;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -171,6 +193,50 @@ public class Appointment {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    // NEW: Getters and setters for Employee relationship
+    public Employee getAssignedEmployee() {
+        return assignedEmployee;
+    }
+    
+    public void setAssignedEmployee(Employee assignedEmployee) {
+        this.assignedEmployee = assignedEmployee;
+    }
+    
+    // Helper method to get employeeId
+    public Long getEmployeeId() {
+        return assignedEmployee != null ? assignedEmployee.getId() : null;
+    }
+    
+    // Helper method to get employee name (for backward compatibility with frontend)
+    public String getEmployeeName() {
+        return assignedEmployee != null ? assignedEmployee.getName() : technician;
+    }
+    
+    // NEW: Getters and setters for project tracking
+    public BigDecimal getEstimatedHours() {
+        return estimatedHours;
+    }
+    
+    public void setEstimatedHours(BigDecimal estimatedHours) {
+        this.estimatedHours = estimatedHours;
+    }
+    
+    public BigDecimal getActualHours() {
+        return actualHours;
+    }
+    
+    public void setActualHours(BigDecimal actualHours) {
+        this.actualHours = actualHours;
+    }
+    
+    public List<TimeLog> getTimeLogs() {
+        return timeLogs;
+    }
+    
+    public void setTimeLogs(List<TimeLog> timeLogs) {
+        this.timeLogs = timeLogs;
     }
     
     @PreUpdate
