@@ -1,0 +1,22 @@
+spring.application.name=autocare360
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.jdbc.time_zone=UTC
+
+spring.flyway.enabled=true
+
+# JWT & CORS
+app.security.jwt.secret=${JWT_SECRET}
+app.security.jwt.access-token-ttl-seconds=3600
+app.cors.allowed-origins=https://autocare360.vercel.app,http://localhost:3000
+
+# Server
+server.port=8080
