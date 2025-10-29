@@ -1,4 +1,4 @@
-package com.example.autocare360.controller;
+package com.autocare360.controller;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,23 +23,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.autocare360.dto.ActiveProjectDTO;
-import com.example.autocare360.dto.CreateTimeLogRequestDTO;
-import com.example.autocare360.dto.StartTimerRequestDTO;
-import com.example.autocare360.dto.StopTimerRequestDTO;
-import com.example.autocare360.dto.TimeLogResponseDTO;
-import com.example.autocare360.dto.TimeLogSummaryDTO;
-import com.example.autocare360.dto.TimerResponseDTO;
-import com.example.autocare360.dto.UpdateTimeLogRequestDTO;
-import com.example.autocare360.entity.Appointment;
-import com.example.autocare360.entity.Employee;
-import com.example.autocare360.entity.TimeLog;
-import com.example.autocare360.entity.Timer;
-import com.example.autocare360.exception.ResourceNotFoundException;
-import com.example.autocare360.repository.AppointmentRepository;
-import com.example.autocare360.repository.EmployeeRepository;
-import com.example.autocare360.repository.TimeLogRepository;
-import com.example.autocare360.repository.TimerRepository;
+import com.autocare360.dto.ActiveProjectDTO;
+import com.autocare360.dto.CreateTimeLogRequestDTO;
+import com.autocare360.dto.StartTimerRequestDTO;
+import com.autocare360.dto.StopTimerRequestDTO;
+import com.autocare360.dto.TimeLogResponseDTO;
+import com.autocare360.dto.TimeLogSummaryDTO;
+import com.autocare360.dto.TimerResponseDTO;
+import com.autocare360.dto.UpdateTimeLogRequestDTO;
+import com.autocare360.entity.Appointment;
+import com.autocare360.entity.Employee;
+import com.autocare360.entity.TimeLog;
+import com.autocare360.entity.Timer;
+import com.autocare360.exception.ResourceNotFoundException;
+import com.autocare360.repo.AppointmentRepository;
+import com.autocare360.repo.EmployeeRepository;
+import com.autocare360.repo.TimeLogRepository;
+import com.autocare360.repo.TimerRepository;
 
 import jakarta.validation.Valid;
 

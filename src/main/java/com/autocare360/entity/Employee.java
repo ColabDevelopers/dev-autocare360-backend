@@ -1,4 +1,4 @@
-package com.example.autocare360.entity;
+package com.autocare360.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

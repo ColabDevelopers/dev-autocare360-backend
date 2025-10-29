@@ -1,4 +1,4 @@
-package com.example.autocare360.repository;
+package com.autocare360.repo;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.example.autocare360.entity.TimeLog;
+import com.autocare360.entity.TimeLog;
 
 @Repository
 public interface TimeLogRepository extends JpaRepository<TimeLog, Long> {
