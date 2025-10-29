@@ -1,0 +1,384 @@
+openapi: 3.0.3
+info:
+  title: AutoCare360 Backend API
+  version: "1.0.0"
+  description: |
+    REST API for authentication, users, employees, and customers.
+servers:
+  - url: http://localhost:8080
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Role:
+      type: string
+      enum: [admin, employee, customer]
+    User:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string, format: email }
+        name: { type: string }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/Role' }
+        status: { type: string, description: "Active|Inactive" }
+        phone: { type: string, nullable: true }
+        employeeNo: { type: string, nullable: true }
+        department: { type: string, nullable: true }
+      required: [id, email, name, roles]
+    Employee:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string, format: email }
+        name: { type: string }
+        employeeNo: { type: string }
+        department: { type: string }
+        status: { type: string }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/Role' }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, name, employeeNo, department, status, roles]
+    RegisterRequest:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 6 }
+        phone: { type: string }
+        vehicleMake: { type: string }
+        vehicleModel: { type: string }
+        vehicleYear: { type: string }
+      required: [name, email, password, phone, vehicleMake, vehicleModel, vehicleYear]
+    LoginRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+      required: [email, password]
+    AuthResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        user: { $ref: '#/components/schemas/User' }
+      required: [accessToken, user]
+    ChangePasswordRequest:
+      type: object
+      properties:
+        currentPassword: { type: string }
+        newPassword: { type: string }
+      required: [currentPassword, newPassword]
+    PatchUserMeRequest:
+      type: object
+      properties:
+        phone: { type: string }
+      additionalProperties: false
+      required: [phone]
+    CreateEmployeeRequest:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        department: { type: string }
+      required: [name, email, department]
+    UpdateEmployeeRequest:
+      type: object
+      properties:
+        name: { type: string }
+        department: { type: string }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+      required: [name, department, status]
+    AdminUpdateCustomerRequest:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: string }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: object }
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409':
+          description: Email already in use
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email/password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Tokens and user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/me:
+    get:
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      summary: Current user profile (role-aware)
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { description: Unauthorized }
+    patch:
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      summary: Update current user (phone only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PatchUserMeRequest' }
+      responses:
+        '204': { description: Updated }
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '401': { description: Unauthorized }
+
+  /users/change-password:
+    post:
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      summary: Change password (all roles)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangePasswordRequest' }
+      responses:
+        '204': { description: Changed }
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '401': { description: Unauthorized }
+
+  /admin/employees:
+    get:
+      tags: [Admin Employees]
+      security: [{ bearerAuth: [] }]
+      summary: List employees
+      responses:
+        '200':
+          description: Employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Employee' }
+        '403': { description: Forbidden }
+    post:
+      tags: [Admin Employees]
+      security: [{ bearerAuth: [] }]
+      summary: Create employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateEmployeeRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Employee' }
+        '403': { description: Forbidden }
+
+  /admin/employees/{id}:
+    get:
+      tags: [Admin Employees]
+      security: [{ bearerAuth: [] }]
+      summary: Get employee by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Employee
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Employee' }
+        '404': { description: Not Found }
+        '403': { description: Forbidden }
+    put:
+      tags: [Admin Employees]
+      security: [{ bearerAuth: [] }]
+      summary: Update employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateEmployeeRequest' }
+      responses:
+        '200':
+          description: Employee
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Employee' }
+        '404': { description: Not Found }
+        '403': { description: Forbidden }
+    delete:
+      tags: [Admin Employees]
+      security: [{ bearerAuth: [] }]
+      summary: Delete employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204': { description: Deleted }
+        '404': { description: Not Found }
+        '403': { description: Forbidden }
+
+  /admin/employees/{id}/reset-password:
+    post:
+      tags: [Admin Employees]
+      security: [{ bearerAuth: [] }]
+      summary: Reset employee password to default ("password")
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Employee
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Employee' }
+        '404': { description: Not Found }
+        '403': { description: Forbidden }
+
+  /admin/customers:
+    get:
+      tags: [Admin Customers]
+      security: [{ bearerAuth: [] }]
+      summary: List customers
+      responses:
+        '200':
+          description: Customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/User' }
+        '403': { description: Forbidden }
+
+  /admin/customers/{id}:
+    get:
+      tags: [Admin Customers]
+      security: [{ bearerAuth: [] }]
+      summary: Get customer by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Customer
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '404': { description: Not Found }
+        '403': { description: Forbidden }
+    patch:
+      tags: [Admin Customers]
+      security: [{ bearerAuth: [] }]
+      summary: Patch customer (name/phone/status)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminUpdateCustomerRequest' }
+      responses:
+        '200':
+          description: Customer
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '404': { description: Not Found }
+        '403': { description: Forbidden }
+    delete:
+      tags: [Admin Customers]
+      security: [{ bearerAuth: [] }]
+      summary: Delete customer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204': { description: Deleted }
+        '404': { description: Not Found }
+        '403': { description: Forbidden }
+
+
