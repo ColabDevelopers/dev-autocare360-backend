@@ -1,13 +1,16 @@
 package com.example.autocare360.config;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import com.example.autocare360.entity.Employee;
 import com.example.autocare360.entity.Schedule;
 import com.example.autocare360.entity.User;
+import com.example.autocare360.repository.EmployeeRepository;
 import com.example.autocare360.repository.ScheduleRepository;
 import com.example.autocare360.repository.UserRepository;
 
@@ -20,6 +23,9 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private ScheduleRepository scheduleRepository;
     
+    @Autowired
+    private EmployeeRepository employeeRepository;
+    
     @Override
     public void run(String... args) throws Exception {
         // Initialize sample users if none exist
@@ -31,6 +37,18 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(user2);
             
             System.out.println("users table created");
+        }
+        
+        // Initialize sample employee if none exist
+        if (employeeRepository.count() == 0) {
+            Employee employee1 = new Employee("Mike Johnson", "mike.johnson@autocare360.com", "555-1234");
+            employee1.setSpecialization("General Mechanic");
+            employee1.setHireDate(LocalDate.of(2023, 1, 15));
+            employee1.setStatus("ACTIVE");
+            
+            employeeRepository.save(employee1);
+            
+            System.out.println("employees table created");
         }
         
         // Initialize schedule if none exist
