@@ -1,4 +1,4 @@
-package com.example.autocare360.dto;
+package com.autocare360.dto;
 
 import java.math.BigDecimal;
 

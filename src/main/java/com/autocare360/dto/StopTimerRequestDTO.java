@@ -1,4 +1,4 @@
-package com.example.autocare360.dto;
+package com.autocare360.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
