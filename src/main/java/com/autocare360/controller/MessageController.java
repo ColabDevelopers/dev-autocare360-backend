@@ -152,4 +152,19 @@ public class MessageController {
         
         return ResponseEntity.ok(employee);
     }
+    
+    /**
+     * Get all messages for current customer
+     * This endpoint is specifically for customers to load their complete chat history
+     * including broadcasts they sent and all employee replies
+     */
+    @GetMapping("/customer/all")
+    public ResponseEntity<List<MessageDTO>> getAllCustomerMessages(Authentication authentication) {
+        log.info("Getting all customer messages");
+        
+        Long customerId = authUtil.getUserIdFromAuth(authentication);
+        List<MessageDTO> messages = messageService.getAllCustomerMessages(customerId);
+        
+        return ResponseEntity.ok(messages);
+    }
 }

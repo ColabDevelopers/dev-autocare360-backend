@@ -64,12 +64,21 @@ public class MessageService {
         } else {
             // Employee message: Send to specific customer
             if (receiverId != null) {
-                messagingTemplate.convertAndSendToUser(
-                    receiverId.toString(),
-                    "/queue/messages",
-                    messageDTO
-                );
-                log.info("WebSocket notification sent to customer {}", receiverId);
+                // Get the customer's email to send WebSocket message
+                User receiver = userRepository.findById(receiverId)
+                        .orElse(null);
+                
+                if (receiver != null) {
+                    // Use customer's email (username) for WebSocket routing
+                    messagingTemplate.convertAndSendToUser(
+                        receiver.getEmail(),  // Changed from receiverId.toString() to email
+                        "/queue/messages",
+                        messageDTO
+                    );
+                    log.info("WebSocket notification sent to customer {} ({})", receiverId, receiver.getEmail());
+                } else {
+                    log.warn("Receiver with ID {} not found, cannot send WebSocket notification", receiverId);
+                }
             }
         }
         
@@ -279,5 +288,32 @@ public class MessageService {
                 employee.getRoles().iterator().next().getName()
         );
     }
+    
+    /**
+     * Get all messages for a customer (including broadcasts they sent and employee replies)
+     * This is simpler than using conversations endpoint for customers
+     */
+    @Transactional(readOnly = true)
+    public List<MessageDTO> getAllCustomerMessages(Long customerId) {
+        log.info("Getting all messages for customer {}", customerId);
+        
+        // Get all messages where:
+        // 1. Customer sent (as broadcast with receiverId=NULL or to specific employee)
+        // 2. Employee sent to this customer (receiverId=customerId)
+        List<Message> messages = messageRepository.findAllCustomerMessages(customerId);
+        
+        List<MessageDTO> messageDTOs = new ArrayList<>();
+        for (Message message : messages) {
+            User sender = userRepository.findById(message.getSenderId())
+                    .orElse(null);
+            if (sender != null) {
+                messageDTOs.add(convertToDTO(message, sender));
+            }
+        }
+        
+        log.info("Found {} total messages for customer {}", messageDTOs.size(), customerId);
+        return messageDTOs;
+    }
 }
+
 

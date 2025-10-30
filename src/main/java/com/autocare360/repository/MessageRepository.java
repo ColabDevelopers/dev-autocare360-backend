@@ -2,6 +2,7 @@ package com.autocare360.repository;
 
 import com.autocare360.entity.Message;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,11 +14,13 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     
     /**
      * Get all messages between two users (conversation)
-     * Also handles NULL receiverId for customer-to-employee-pool messages
+     * - Customer messages: senderId = customerId AND receiverId IS NULL (broadcast)
+     * - Employee replies: senderId = employeeId AND receiverId = customerId
      */
     @Query("SELECT m FROM Message m WHERE " +
-           "(m.senderId = :userId1 AND (m.receiverId = :userId2 OR m.receiverId IS NULL)) OR " +
-           "(m.senderId = :userId2 AND (m.receiverId = :userId1 OR m.receiverId IS NULL)) " +
+           "((m.senderId = :userId1 AND m.receiverId = :userId2) OR " +
+           " (m.senderId = :userId2 AND m.receiverId IS NULL) OR " +
+           " (m.senderId = :userId2 AND m.receiverId = :userId1)) " +
            "ORDER BY m.createdAt ASC")
     List<Message> findConversation(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
     
@@ -50,24 +53,41 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     
     /**
      * Get unread messages from a specific sender
+     * Includes broadcast messages (receiverId IS NULL) for employees
      */
-    @Query("SELECT COUNT(m) FROM Message m WHERE m.receiverId = :receiverId " +
-           "AND m.senderId = :senderId AND m.isRead = false")
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.senderId = :senderId " +
+           "AND m.isRead = false AND (m.receiverId = :receiverId OR m.receiverId IS NULL)")
     Long countUnreadMessagesFrom(@Param("receiverId") Long receiverId, @Param("senderId") Long senderId);
     
     /**
-     * Get the last message in a conversation (including NULL receiverId)
+     * Get the last message in a conversation
+     * - Customer messages: senderId = customerId AND receiverId IS NULL
+     * - Employee replies: senderId = employeeId AND receiverId = customerId
      */
     @Query("SELECT m FROM Message m WHERE " +
-           "(m.senderId = :userId1 AND (m.receiverId = :userId2 OR m.receiverId IS NULL)) OR " +
-           "(m.senderId = :userId2 AND (m.receiverId = :userId1 OR m.receiverId IS NULL)) " +
+           "((m.senderId = :userId1 AND m.receiverId = :userId2) OR " +
+           " (m.senderId = :userId2 AND m.receiverId IS NULL) OR " +
+           " (m.senderId = :userId2 AND m.receiverId = :userId1)) " +
            "ORDER BY m.createdAt DESC LIMIT 1")
     Message findLastMessage(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
     
     /**
      * Mark all messages from a sender as read
+     * Handles both direct messages and broadcast messages
      */
-    @Query("UPDATE Message m SET m.isRead = true WHERE m.receiverId = :receiverId " +
-           "AND m.senderId = :senderId AND m.isRead = false")
+    @Modifying
+    @Query("UPDATE Message m SET m.isRead = true WHERE " +
+           "m.senderId = :senderId AND m.isRead = false " +
+           "AND (m.receiverId = :receiverId OR m.receiverId IS NULL)")
     void markMessagesAsRead(@Param("receiverId") Long receiverId, @Param("senderId") Long senderId);
+    
+    /**
+     * Get ALL messages for a specific customer
+     * Returns: 1) Messages customer sent (receiverId IS NULL or to specific employee)
+     *          2) Messages employees sent to this customer (receiverId = customerId)
+     */
+    @Query("SELECT m FROM Message m WHERE " +
+           "m.senderId = :customerId OR m.receiverId = :customerId " +
+           "ORDER BY m.createdAt ASC")
+    List<Message> findAllCustomerMessages(@Param("customerId") Long customerId);
 }
