@@ -15,8 +15,9 @@ public class ServiceRecordService {
 
     private final ServiceRecordRepository repo;
 
+    // Updated method call
     public List<ServiceRecord> listForVehicle(Long vehicleId) {
-        return repo.findByVehicleIdOrderByRequestedAtDesc(vehicleId);
+        return repo.findByVehicle_IdOrderByRequestedAtDesc(vehicleId);
     }
 
     public List<ServiceRecord> listByStatus(String status) {
@@ -41,5 +42,11 @@ public class ServiceRecordService {
         }).orElse(null);
     }
 
-    public void delete(Long id) { repo.deleteById(id); }
+    public void delete(Long id) {
+        repo.deleteById(id);
+    }
+
+    public List<ServiceRecord> listAll() {
+        return repo.findAll();
+    }
 }

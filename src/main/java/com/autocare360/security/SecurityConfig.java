@@ -29,7 +29,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+//						.requestMatchers("/api/vehicles/**").permitAll() // Temporary: Allow all for vehicle endpoints
+						.anyRequest().authenticated()
                 )
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();

@@ -9,5 +9,8 @@ import com.autocare360.entity.Vehicle;
 
 @Repository
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
-    List<Vehicle> findByUserId(Long userId);
+    // Check if a vehicle with this VIN exists for a specific user
+    boolean existsByVinAndUser_Id(String vin, Long userId);
+
+    List<Vehicle> findByUser_Id(Long userId);
 }

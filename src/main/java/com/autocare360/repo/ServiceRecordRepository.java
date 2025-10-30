@@ -9,6 +9,6 @@ import com.autocare360.entity.ServiceRecord;
 
 @Repository
 public interface ServiceRecordRepository extends JpaRepository<ServiceRecord, Long> {
-    List<ServiceRecord> findByVehicleIdOrderByRequestedAtDesc(Long vehicleId);
+    List<ServiceRecord> findByVehicle_IdOrderByRequestedAtDesc(Long vehicleId);
     List<ServiceRecord> findByStatusOrderByRequestedAtDesc(String status);
 }

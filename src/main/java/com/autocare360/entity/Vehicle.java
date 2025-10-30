@@ -2,6 +2,8 @@ package com.autocare360.entity;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column; import jakarta.persistence.Entity; import jakarta.persistence.FetchType; import jakarta.persistence.GeneratedValue; import jakarta.persistence.GenerationType; import jakarta.persistence.Id; import jakarta.persistence.JoinColumn; import jakarta.persistence.ManyToOne; import jakarta.persistence.PreUpdate; import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+
 @Entity @Table(name = "vehicles")
 public class Vehicle {
 
@@ -17,9 +19,11 @@ public class Vehicle {
     @Column(length = 20)
     private String vin;
 
+    @NotNull
     @Column(nullable = false)
     private String make;
 
+    @NotNull
     @Column(nullable = false)
     private String model;
 
