@@ -52,6 +52,15 @@ public class Appointment {
     @Column(length = 1000)
     private String notes;
     
+    @Column(name = "progress")
+    private Integer progress = 0; // Progress percentage (0-100), defaults to 0
+    
+    @Column(name = "due_date")
+    private LocalDate dueDate; // When the job should be completed
+    
+    @Column(name = "special_instructions", length = 1000)
+    private String specialInstructions; // Special instructions for technician
+    
     private String technician; // DEPRECATED: Keep for backward compatibility, use assignedEmployee instead
     
     // NEW: Proper employee reference
@@ -237,6 +246,31 @@ public class Appointment {
     
     public void setTimeLogs(List<TimeLog> timeLogs) {
         this.timeLogs = timeLogs;
+    }
+    
+    // NEW: Getters and setters for dashboard fields
+    public Integer getProgress() {
+        return progress;
+    }
+    
+    public void setProgress(Integer progress) {
+        this.progress = progress;
+    }
+    
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+    
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+    
+    public String getSpecialInstructions() {
+        return specialInstructions;
+    }
+    
+    public void setSpecialInstructions(String specialInstructions) {
+        this.specialInstructions = specialInstructions;
     }
     
     @PreUpdate
