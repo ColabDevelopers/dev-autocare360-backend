@@ -1,19 +1,10 @@
 package com.autocare360.entity;
 
-import java.time.LocalDateTime;
-
+import com.autocare360.entity.Vehicle;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "services")
@@ -23,8 +14,11 @@ public class ServiceRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "vehicle_id", nullable = false)
+    private Long vehicleId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehicle_id", nullable = false)
+    @JoinColumn(name = "vehicle_id", insertable = false, updatable = false)
     @JsonIgnore
     private Vehicle vehicle;
 
@@ -44,28 +38,34 @@ public class ServiceRecord {
     private String notes;
 
     @Column(length = 2000)
-    private String attachments; // JSON array of URLs
+    private String attachments;
+
+    @Column(name = "price")
+    private Double price;
+
+    @Column(name = "duration")
+    private Double duration; // In hours or minutes, your choice
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
-    public ServiceRecord() {
-        this.createdAt = LocalDateTime.now();
+    @PreUpdate
+    public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Getters and setters
+    // --- Getters and setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public Long getVehicleId() { return vehicleId; }
+    public void setVehicleId(Long vehicleId) { this.vehicleId = vehicleId; }
+
     public Vehicle getVehicle() { return vehicle; }
     public void setVehicle(Vehicle vehicle) { this.vehicle = vehicle; }
-
-    public Long getVehicleId() { return vehicle != null ? vehicle.getId() : null; }
-    public void setVehicleId(Long vehicleId) { if (this.vehicle == null) this.vehicle = new Vehicle(); this.vehicle.setId(vehicleId); }
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
@@ -85,12 +85,16 @@ public class ServiceRecord {
     public String getAttachments() { return attachments; }
     public void setAttachments(String attachments) { this.attachments = attachments; }
 
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public Double getDuration() { return duration; }
+    public void setDuration(Double duration) { this.duration = duration; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    @PreUpdate
-    public void preUpdate() { this.updatedAt = LocalDateTime.now(); }
 }

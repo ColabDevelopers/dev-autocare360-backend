@@ -32,8 +32,10 @@ public class ServiceController {
                 s.getRequestedAt(),
                 s.getScheduledAt(),
                 s.getNotes(),
-                s.getAttachments()
-        );
+                s.getAttachments(),
+                s.getPrice(),      // new
+                s.getDuration()
+                );
     }
 
     @GetMapping
@@ -89,6 +91,7 @@ public class ServiceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToDTO(created));
     }
 
+
     @PutMapping("/{id}")
     public ResponseEntity<ServiceRecordDTO> update(@PathVariable Long id,
                                                    @RequestBody Map<String, Object> body) {
@@ -125,6 +128,30 @@ public class ServiceController {
                 "total", dtos.size(),
                 "page", 1,
                 "perPage", dtos.size()
+        ));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<?> getServiceSummary() {
+        List<ServiceRecord> all = serviceService.listAll();
+
+        // You’ll only get averages if you have these fields in your entity
+        double avgPrice = all.stream()
+                .filter(s -> s.getPrice() != null)
+                .mapToDouble(ServiceRecord::getPrice)
+                .average()
+                .orElse(0.0);
+
+        double avgDuration = all.stream()
+                .filter(s -> s.getDuration() != null)
+                .mapToDouble(ServiceRecord::getDuration)
+                .average()
+                .orElse(0.0);
+
+        return ResponseEntity.ok(Map.of(
+                "totalServices", all.size(),
+                "averagePrice", avgPrice,
+                "averageDuration", avgDuration
         ));
     }
 }

@@ -13,10 +13,15 @@ public class ServiceRecordDTO {
     private String notes;
     private String attachments;
 
+    private Double price;     // new
+    private Double duration;  // new, in hours
+//    private Long appointmentId;
+
     // Constructor
     public ServiceRecordDTO(Long id, Long vehicleId, String type, String status,
                             LocalDateTime requestedAt, LocalDateTime scheduledAt,
-                            String notes, String attachments) {
+                            String notes, String attachments,
+                            Double price, Double duration) {
         this.id = id;
         this.vehicleId = vehicleId;
         this.type = type;
@@ -25,7 +30,14 @@ public class ServiceRecordDTO {
         this.scheduledAt = scheduledAt;
         this.notes = notes;
         this.attachments = attachments;
+        this.price = price;
+        this.duration = duration;
+        //this.appointmentId = appointmentId;
     }
+
+//    public Long getAppointmentId() { return appointmentId; }
+//    public void setAppointmentId(Long appointmentId) { this.appointmentId = appointmentId; }
+
 
     // Getters and setters
     public Long getId() { return id; }
@@ -51,4 +63,10 @@ public class ServiceRecordDTO {
 
     public String getAttachments() { return attachments; }
     public void setAttachments(String attachments) { this.attachments = attachments; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public Double getDuration() { return duration; }
+    public void setDuration(Double duration) { this.duration = duration; }
 }
