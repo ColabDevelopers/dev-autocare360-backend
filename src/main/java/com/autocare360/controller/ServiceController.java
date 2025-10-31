@@ -27,15 +27,16 @@ public class ServiceController {
         return new ServiceRecordDTO(
                 s.getId(),
                 s.getVehicleId(),
-                s.getType(),
+                s.getName(),           // Service name
+                s.getType(),           // Category
                 s.getStatus(),
                 s.getRequestedAt(),
                 s.getScheduledAt(),
                 s.getNotes(),
-                s.getAttachments(),
-                s.getPrice(),      // new
-                s.getDuration()
-                );
+                s.getAttachments(),    // Now String instead of List<String>
+                s.getPrice(),
+                s.getDuration()        // Automatically calculates durationMinutes
+        );
     }
 
     @GetMapping
@@ -43,15 +44,25 @@ public class ServiceController {
                                   @RequestHeader(value = "Authorization", required = false) String auth) {
 
         boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
+        System.out.println("Is Admin: " + isAdmin);
+        System.out.println("Status param: " + status);
+
         List<ServiceRecord> services;
 
         if (isAdmin) {
+            System.out.println("User is ADMIN — fetching all services...");
             services = serviceService.listAll();
+            System.out.println("Admin - fetched all services: " + services.size());
         } else if (status != null) {
+            System.out.println("Non-admin user with status filter: " + status);
             services = serviceService.listByStatus(status);
+            System.out.println("Non-admin - fetched by status (" + status + "): " + services.size());
         } else {
-            services = serviceService.listByStatus("requested");
+            System.out.println("Non-admin user with NO status filter — fetching all services...");
+            services = serviceService.listAll();
+            System.out.println("Non-admin - fetched all services (no filter): " + services.size());
         }
+
 
         List<ServiceRecordDTO> dtos = services.stream()
                 .map(this::mapToDTO)
@@ -84,8 +95,20 @@ public class ServiceController {
 
         ServiceRecord s = new ServiceRecord();
         s.setVehicleId(vehicleId);
+        s.setName((String) body.get("name"));
         s.setType((String) body.get("type"));
         if (body.containsKey("description")) s.setNotes((String) body.get("description"));
+        if (body.containsKey("notes")) s.setNotes((String) body.get("notes"));
+        if (body.containsKey("price")) {
+            Object priceVal = body.get("price");
+            if (priceVal instanceof Number) s.setPrice(((Number) priceVal).doubleValue());
+        }
+        if (body.containsKey("duration")) {
+            Object durationVal = body.get("duration");
+            if (durationVal instanceof Number) s.setDuration(((Number) durationVal).doubleValue());
+        }
+
+        if (body.containsKey("status")) s.setStatus((String) body.get("status"));
 
         ServiceRecord created = serviceService.create(s);
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToDTO(created));
@@ -96,11 +119,21 @@ public class ServiceController {
     public ResponseEntity<ServiceRecordDTO> update(@PathVariable Long id,
                                                    @RequestBody Map<String, Object> body) {
         ServiceRecord patch = new ServiceRecord();
+        if (body.containsKey("name")) patch.setName((String) body.get("name"));
+        if (body.containsKey("type")) patch.setType((String) body.get("type"));
         if (body.containsKey("status")) patch.setStatus((String) body.get("status"));
         if (body.containsKey("scheduledAt")) {
-            // parsing skipped for brevity
+            // parsing skipped for brevity - add proper LocalDateTime parsing here
         }
         if (body.containsKey("notes")) patch.setNotes((String) body.get("notes"));
+        if (body.containsKey("price")) {
+            Object priceVal = body.get("price");
+            if (priceVal instanceof Number) patch.setPrice(((Number) priceVal).doubleValue());
+        }
+        if (body.containsKey("duration")) {
+            Object durationVal = body.get("duration");
+            if (durationVal instanceof Number) patch.setDuration(((Number) durationVal).doubleValue());
+        }
 
         ServiceRecord updated = serviceService.update(id, patch);
         if (updated == null) return ResponseEntity.notFound().build();
@@ -132,10 +165,14 @@ public class ServiceController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<?> getServiceSummary() {
-        List<ServiceRecord> all = serviceService.listAll();
+    public ResponseEntity<?> getServiceSummary(@RequestHeader(value = "Authorization", required = false) String auth) {
+        // Debug: Log if admin
+        boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
+        System.out.println("Is Admin: " + isAdmin);
 
-        // You’ll only get averages if you have these fields in your entity
+        List<ServiceRecord> all = serviceService.listAll();
+        System.out.println("Total services found: " + all.size());
+
         double avgPrice = all.stream()
                 .filter(s -> s.getPrice() != null)
                 .mapToDouble(ServiceRecord::getPrice)
@@ -148,10 +185,31 @@ public class ServiceController {
                 .average()
                 .orElse(0.0);
 
+        // Convert average duration from hours to minutes
+        int avgDurationMinutes = (int) Math.round(avgDuration * 60);
+
         return ResponseEntity.ok(Map.of(
                 "totalServices", all.size(),
                 "averagePrice", avgPrice,
-                "averageDuration", avgDuration
+                "averageDuration", avgDuration,              // hours
+                "averageDurationMinutes", avgDurationMinutes  // minutes
         ));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @RequestHeader(value = "Authorization", required = false) String auth) {
+        // Check if the user is admin
+        if (!jwtService.hasRole(auth, "ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403
+        }
+
+        boolean deleted = serviceService.delete(id); // implement delete in service
+        if (!deleted) {
+            return ResponseEntity.notFound().build(); // 404 if not found
+        }
+
+        return ResponseEntity.noContent().build(); // 204 on success
+    }
+
 }

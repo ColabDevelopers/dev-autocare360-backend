@@ -1,100 +1,74 @@
 package com.autocare360.entity;
 
-import com.autocare360.entity.Vehicle;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "services")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ServiceRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "vehicle_id", nullable = false)
+    @Column(name = "vehicle_id")
     private Long vehicleId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vehicle_id", insertable = false, updatable = false)
-    @JsonIgnore
-    private Vehicle vehicle;
+    @Column(name = "type")
+    private String type;  // Category: "maintenance", "safety", "diagnostics"
 
-    @Column(nullable = false)
-    private String type;
+    @Column(name = "name")
+    private String name;  // Service name like "Oil Change", "Brake Inspection"
 
-    @Column(nullable = false, length = 30)
-    private String status = "requested";
+    @Column(name = "status")
+    private String status;  // "active", "inactive", "requested", "scheduled", "completed"
 
     @Column(name = "requested_at")
-    private LocalDateTime requestedAt = LocalDateTime.now();
+    private LocalDateTime requestedAt;
 
     @Column(name = "scheduled_at")
     private LocalDateTime scheduledAt;
 
-    @Column(length = 2000)
-    private String notes;
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;  // Description
 
-    @Column(length = 2000)
-    private String attachments;
+    @Column(name = "attachments", columnDefinition = "JSON")
+    private String attachments;  // Stored as JSON string
 
     @Column(name = "price")
     private Double price;
 
     @Column(name = "duration")
-    private Double duration; // In hours or minutes, your choice
+    private Double duration;  // Duration in hours
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (requestedAt == null) {
+            requestedAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = "requested";
+        }
     }
 
-    // --- Getters and setters ---
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Long getVehicleId() { return vehicleId; }
-    public void setVehicleId(Long vehicleId) { this.vehicleId = vehicleId; }
-
-    public Vehicle getVehicle() { return vehicle; }
-    public void setVehicle(Vehicle vehicle) { this.vehicle = vehicle; }
-
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public LocalDateTime getRequestedAt() { return requestedAt; }
-    public void setRequestedAt(LocalDateTime requestedAt) { this.requestedAt = requestedAt; }
-
-    public LocalDateTime getScheduledAt() { return scheduledAt; }
-    public void setScheduledAt(LocalDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
-    public String getAttachments() { return attachments; }
-    public void setAttachments(String attachments) { this.attachments = attachments; }
-
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
-
-    public Double getDuration() { return duration; }
-    public void setDuration(Double duration) { this.duration = duration; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

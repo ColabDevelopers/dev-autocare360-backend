@@ -1,14 +1,18 @@
 package com.autocare360.repo;
 
-import java.util.List;
-
+import com.autocare360.entity.ServiceRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.autocare360.entity.ServiceRecord;
+import java.util.List;
 
 @Repository
 public interface ServiceRecordRepository extends JpaRepository<ServiceRecord, Long> {
-    List<ServiceRecord> findByVehicle_IdOrderByRequestedAtDesc(Long vehicleId);
-    List<ServiceRecord> findByStatusOrderByRequestedAtDesc(String status);
+
+    // FIXED: Changed from findByVehicle_Id to findByVehicleId
+    List<ServiceRecord> findByVehicleIdOrderByRequestedAtDesc(Long vehicleId);
+
+    List<ServiceRecord> findByStatus(String status);
+
+    List<ServiceRecord> findByVehicleId(Long vehicleId);
 }
