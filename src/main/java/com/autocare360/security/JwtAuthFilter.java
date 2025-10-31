@@ -31,7 +31,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 		String header = request.getHeader("Authorization");
 		if (header != null && header.startsWith("Bearer ")) {
 			String token = header.substring(7);
-
 			log.debug("Processing JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
 			
 			if (jwtService.isTokenValid(token)) {
@@ -52,21 +51,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 				});
 			} else {
 				log.warn("Invalid JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
-
-	// 			if (jwtService.isTokenValid(token)) {
-	// 				String subject = jwtService.extractSubject(token);
-	// 				userRepository.findById(Long.valueOf(subject)).ifPresent(user -> {
-	// 					List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-	// 							.map(r -> new SimpleGrantedAuthority("ROLE_" + r.getName()))
-	// 							.collect(Collectors.toList());
-	// 					SecurityContextHolder.getContext().setAuthentication(
-	// 							new UsernamePasswordAuthenticationToken(user.getEmail(), null, authorities)
-	// 					);
-	// 				});
-
+			}
 		}
 		filterChain.doFilter(request, response);
 	}
-}}
+}
 
 

@@ -1,6 +1,5 @@
 package com.autocare360.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class TimerResponseDTO {
@@ -10,7 +9,6 @@ public class TimerResponseDTO {
     private String projectName;
     private LocalDateTime startTime;
     private Integer elapsedSeconds;
-    private BigDecimal elapsedHours;
     private Boolean isActive;
     
     // Constructors
@@ -56,14 +54,6 @@ public class TimerResponseDTO {
     
     public void setElapsedSeconds(Integer elapsedSeconds) {
         this.elapsedSeconds = elapsedSeconds;
-    }
-    
-    public BigDecimal getElapsedHours() {
-        return elapsedHours;
-    }
-    
-    public void setElapsedHours(BigDecimal elapsedHours) {
-        this.elapsedHours = elapsedHours;
     }
     
     public Boolean getIsActive() {
