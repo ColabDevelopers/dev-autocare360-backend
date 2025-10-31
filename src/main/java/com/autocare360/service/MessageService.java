@@ -129,28 +129,31 @@ public class MessageService {
         List<ConversationDTO> conversations = new ArrayList<>();
         
         if (isEmployee) {
-            // Employee: Get ALL customer conversations
+            // Employee: Get ALL customer conversations (shared inbox)
             List<Long> customerIds = messageRepository.findAllCustomersWithMessages();
-            
+
             for (Long customerId : customerIds) {
                 User customer = userRepository.findById(customerId).orElse(null);
                 if (customer == null) continue;
-                
-                Message lastMessage = messageRepository.findLastMessage(userId, customerId);
-                if (lastMessage == null) continue;
-                
+
+                // Latest message for this customer across ALL employees
+                List<Message> allForCustomer = messageRepository.findAllCustomerMessages(customerId);
+                if (allForCustomer == null || allForCustomer.isEmpty()) continue;
+                Message lastMessage = allForCustomer.get(allForCustomer.size() - 1);
+
                 Long unreadCount = messageRepository.countUnreadMessagesFrom(userId, customerId);
-                
+
                 ConversationDTO conversation = new ConversationDTO();
                 conversation.setUserId(customerId);
                 conversation.setName(customer.getName());
-                conversation.setRole(customer.getRoles().isEmpty() ? "CUSTOMER" : 
+                conversation.setRole(customer.getRoles().isEmpty() ? "CUSTOMER" :
                     customer.getRoles().iterator().next().getName());
                 conversation.setLastMessage(lastMessage.getMessage());
+                // Pre-format relative time; UI will display directly
                 conversation.setTime(formatTimeAgo(lastMessage.getCreatedAt()));
                 conversation.setUnreadCount(unreadCount);
                 conversation.setAvatar("/placeholder.svg");
-                
+
                 conversations.add(conversation);
             }
         } else {
