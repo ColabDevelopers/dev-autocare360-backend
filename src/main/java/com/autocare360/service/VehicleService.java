@@ -32,15 +32,17 @@ public class VehicleService {
     }
 
     public Vehicle update(Long id, Vehicle patch) {
-        return vehicleRepository.findById(id).map(existing -> {
-            if (patch.getMake() != null) existing.setMake(patch.getMake());
-            if (patch.getModel() != null) existing.setModel(patch.getModel());
-            if (patch.getYear() != 0) existing.setYear(patch.getYear());
-            if (patch.getVin() != null) existing.setVin(patch.getVin());
-            if (patch.getPlateNumber() != null) existing.setPlateNumber(patch.getPlateNumber());
-            if (patch.getColor() != null) existing.setColor(patch.getColor());
-            return vehicleRepository.save(existing);
-        }).orElse(null);
+        return vehicleRepository.findById(id)
+                .map(existing -> {
+                    if (patch.getMake() != null) existing.setMake(patch.getMake());
+                    if (patch.getModel() != null) existing.setModel(patch.getModel());
+                    if (patch.getYear() != null) existing.setYear(patch.getYear()); // no .intValue()
+                    if (patch.getVin() != null) existing.setVin(patch.getVin());
+                    if (patch.getPlateNumber() != null) existing.setPlateNumber(patch.getPlateNumber());
+                    if (patch.getColor() != null) existing.setColor(patch.getColor());
+                    return vehicleRepository.save(existing);
+                })
+                .orElse(null);
     }
 
     public void delete(Long id) {

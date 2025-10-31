@@ -13,21 +13,35 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.autocare360.dto.VehicleCreateDTO;
 
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class VehicleController {
 
     private final VehicleService vehicleService;
     private final JwtService jwtService;
 
     private Long extractUserId(String authorization) {
-        if (authorization == null || !authorization.startsWith("Bearer ")) return null;
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            System.out.println("Missing or invalid Authorization header");
+            return null;
+        }
         String token = authorization.substring(7);
-        if (!jwtService.isTokenValid(token)) return null;
-        return Long.valueOf(jwtService.extractSubject(token));
+
+        // Check validity
+        if (!jwtService.isTokenValid(token)) {
+            System.out.println("Invalid token");
+            return null;
+        }
+
+        String subject = jwtService.extractSubject(token);
+        System.out.println("Extracted subject (userId): " + subject);
+        return Long.valueOf(subject);
     }
+
 
     private VehicleDTO mapToDTO(Vehicle v) {
         return new VehicleDTO(
@@ -65,29 +79,53 @@ public class VehicleController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VehicleDTO> get(@PathVariable Long id) {
+    public ResponseEntity<?> get(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String auth) {
+
+        Long userId = extractUserId(auth);
+        if (userId == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+
         Vehicle v = vehicleService.get(id);
         if (v == null) return ResponseEntity.notFound().build();
+
+        boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
+        boolean isOwner = v.getUserId() != null && v.getUserId().equals(userId);
+
+        if (!isAdmin && !isOwner)
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
+
         return ResponseEntity.ok(mapToDTO(v));
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestHeader(value = "Authorization", required = false) String auth,
-                                    @Valid @RequestBody Vehicle v) {
+    public ResponseEntity<?> create(
+            @RequestHeader(value = "Authorization", required = false) String auth,
+            @Valid @RequestBody VehicleCreateDTO dto) {
 
         Long userId = extractUserId(auth);
         if (userId == null) return ResponseEntity.status(401).build();
 
         // prevent duplicate VIN for the same user
-        if (vehicleService.existsByVinAndUserId(v.getVin(), userId)) {
+        if (vehicleService.existsByVinAndUserId(dto.getVin(), userId)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "You already have a vehicle with this VIN"));
         }
 
+        Vehicle v = new Vehicle();
+        v.setVin(dto.getVin());
+        v.setMake(dto.getMake());
+        v.setModel(dto.getModel());
+        v.setYear(dto.getYear());
+        v.setPlateNumber(dto.getPlateNumber());
+        v.setColor(dto.getColor());
         v.setUserId(userId);
+
         Vehicle created = vehicleService.create(v);
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToDTO(created));
     }
+
+
 
     @PutMapping("/{id}")
     public ResponseEntity<VehicleDTO> update(@PathVariable Long id,
@@ -109,10 +147,34 @@ public class VehicleController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String auth) {
+
+        Long userId = extractUserId(auth);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized"));
+        }
+
+        Vehicle v = vehicleService.get(id);
+        if (v == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Vehicle not found"));
+        }
+
+        boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
+        boolean isOwner = v.getUserId() != null && v.getUserId().equals(userId);
+
+        if (!isAdmin && !isOwner) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "You are not allowed to delete this vehicle"));
+        }
+
         vehicleService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
 
     @PutMapping("/{id}/link")
     public ResponseEntity<?> linkVehicle(@PathVariable Long id,
