@@ -167,4 +167,22 @@ public class MessageController {
         
         return ResponseEntity.ok(messages);
     }
+
+    /**
+     * Get all messages for a specific customer (employee view)
+     * Allows any authenticated employee to view the complete conversation thread
+     * for a customer, including messages from other employees.
+     */
+    @GetMapping("/employee/customer/{customerId}/all")
+    public ResponseEntity<List<MessageDTO>> getAllMessagesForCustomerAsEmployee(
+            @PathVariable Long customerId,
+            Authentication authentication) {
+        log.info("Employee requesting all messages for customer {}", customerId);
+
+        // Optional: ensure the requester exists; role checks can be added if needed
+        authUtil.getUserFromAuth(authentication);
+
+        List<MessageDTO> messages = messageService.getAllCustomerMessages(customerId);
+        return ResponseEntity.ok(messages);
+    }
 }

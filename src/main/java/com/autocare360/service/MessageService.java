@@ -62,7 +62,7 @@ public class MessageService {
             log.info("Broadcasting customer message to all employees");
             messagingTemplate.convertAndSend("/topic/employee-messages", messageDTO);
         } else {
-            // Employee message: Send to specific customer
+            // Employee message: Send to specific customer and also broadcast to the shared employee topic
             if (receiverId != null) {
                 // Get the customer's email to send WebSocket message
                 User receiver = userRepository.findById(receiverId)
@@ -71,7 +71,7 @@ public class MessageService {
                 if (receiver != null) {
                     // Use customer's email (username) for WebSocket routing
                     messagingTemplate.convertAndSendToUser(
-                        receiver.getEmail(),  // Changed from receiverId.toString() to email
+                        receiver.getEmail(),
                         "/queue/messages",
                         messageDTO
                     );
@@ -80,6 +80,10 @@ public class MessageService {
                     log.warn("Receiver with ID {} not found, cannot send WebSocket notification", receiverId);
                 }
             }
+
+            // Always broadcast employee replies to all employees so everyone sees the same customer thread
+            log.info("Broadcasting employee reply to all employees for customer {}", receiverId);
+            messagingTemplate.convertAndSend("/topic/employee-messages", messageDTO);
         }
         
         return messageDTO;
