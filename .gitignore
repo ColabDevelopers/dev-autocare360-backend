@@ -39,5 +39,4 @@ build/
 .vscode/
 
 # Sensitive configuration files with credentials
-src/main/resources/application.properties
 flyway.properties

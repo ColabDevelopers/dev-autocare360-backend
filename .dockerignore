@@ -21,7 +21,6 @@ src/test/
 
 # Example/template files
 flyway.properties.example
-src/main/resources/application.properties.example
 
 # IDE files
 .idea/
