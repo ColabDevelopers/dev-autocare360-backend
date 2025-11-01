@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Application and dependencies (from main docker-compose.yml)
+  mysql:
+    image: mysql:8.0
+    container_name: autocare360-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-autocare360}
+      MYSQL_USER: ${DB_USERNAME:-autocare360user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-autocare360pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - autocare360-network
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: autocare360-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-autocare360}?createDatabaseIfNotExist=true
+      DB_USERNAME: ${DB_USERNAME:-autocare360user}
+      DB_PASSWORD: ${DB_PASSWORD:-autocare360pass}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - mysql
+    networks:
+      - autocare360-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: autocare360-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - autocare360-network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: autocare360-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+    depends_on:
+      - prometheus
+    networks:
+      - autocare360-network
+
+volumes:
+  mysql_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  autocare360-network:
+    driver: bridge

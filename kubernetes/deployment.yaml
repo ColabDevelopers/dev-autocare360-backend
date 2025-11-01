@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autocare360-backend
+  namespace: autocare360
+  labels:
+    app: autocare360-backend
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: autocare360-backend
+  template:
+    metadata:
+      labels:
+        app: autocare360-backend
+        version: v1
+    spec:
+      containers:
+      - name: autocare360-backend
+        image: your-docker-username/autocare360-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: autocare360-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: DB_URL
+          valueFrom:
+            configMapKeyRef:
+              name: autocare360-config
+              key: DB_URL
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: autocare360-secret
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: autocare360-secret
+              key: DB_PASSWORD
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: autocare360-secret
+              key: JWT_SECRET
+        - name: CORS_ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: autocare360-config
+              key: CORS_ALLOWED_ORIGINS
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: autocare360-backend-service
+  namespace: autocare360
+  labels:
+    app: autocare360-backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: autocare360-backend

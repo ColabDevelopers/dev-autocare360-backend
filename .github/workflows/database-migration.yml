@@ -1,0 +1,54 @@
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      migration_type:
+        description: 'Migration type'
+        required: true
+        type: choice
+        options:
+          - migrate
+          - validate
+          - info
+          - repair
+
+jobs:
+  flyway-migration:
+    name: Flyway Database Migration
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: 'maven'
+        
+    - name: Run Flyway Migration
+      env:
+        DB_URL: ${{ secrets.DB_URL }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        mvn flyway:${{ github.event.inputs.migration_type }} \
+          -Dflyway.url=$DB_URL \
+          -Dflyway.user=$DB_USERNAME \
+          -Dflyway.password=$DB_PASSWORD
+          
+    - name: Notify on failure
+      if: failure()
+      run: echo "Migration failed for ${{ github.event.inputs.environment }}"

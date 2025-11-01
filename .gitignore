@@ -9,6 +9,10 @@ target/
 
 # Environment variables
 .env
+.env.dev
+.env.staging
+.env.prod
+*.env
 
 ### STS ###
 .apt_generated
@@ -38,4 +42,13 @@ build/
 ### VS Code ###
 .vscode/
 
+# Application properties with sensitive data
 src/main/resources/application.properties
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

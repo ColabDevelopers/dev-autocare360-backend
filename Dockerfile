@@ -1,26 +1,40 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:21-jdk-slim
+# Multi-stage Dockerfile for AutoCare360 Backend
+# Stage 1: Build
+FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml
-COPY mvnw .
-COPY mvnw.cmd .
-COPY .mvn/ .mvn/
+# Copy POM and download dependencies (cached layer)
 COPY pom.xml .
+COPY .mvn .mvn
+RUN mvn dependency:go-offline -B
 
-# Download dependencies (this layer will be cached if pom.xml hasn't changed)
-RUN ./mvnw dependency:go-offline -B
-
-# Copy the source code
+# Copy source code and build
 COPY src ./src
+RUN mvn clean package -DskipTests -B
 
-# Build the application
-RUN ./mvnw clean package -DskipTests
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
 
-# Expose the port the app runs on
+WORKDIR /app
+
+# Add non-root user for security
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
+# Copy the built JAR from builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+
+# Expose port
 EXPOSE 8080
 
-# Run the jar file
-CMD ["java", "-jar", "target/autocare360-0.0.1-SNAPSHOT.jar"]
+# Run the application
+ENTRYPOINT ["java", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-Dspring.profiles.active=${SPRING_PROFILE:prod}", \
+  "-jar", \
+  "app.jar"]

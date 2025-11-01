@@ -1,8 +1,44 @@
-target/
-.git/
-.github/
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
 README.md
 docs/
 *.md
-.gitignore
-.dockerignore
+
+# IDE
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+
+# Build artifacts
+target/
+build/
+*.class
+*.jar
+*.war
+
+# Dependencies
+.mvn/wrapper/maven-wrapper.jar
+
+# Environment
+.env
+.env.*
+*.properties
+!src/main/resources/application.properties.example
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS
+.DS_Store
+Thumbs.db
