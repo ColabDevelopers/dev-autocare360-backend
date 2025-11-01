@@ -1,0 +1,10 @@
+# Example terraform.tfvars file
+# Copy this to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control
+
+aws_region         = "us-east-1"
+db_instance_class  = "db.t3.micro"
+db_username        = "admin"
+db_password        = "your-secure-password-here"
+redis_node_type    = "cache.t3.micro"
+environment        = "production"

@@ -1,26 +1,37 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:21-jdk-slim
+# Multi-stage build for production
+FROM eclipse-temurin:21-jdk-jammy as builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml
+# Copy Maven wrapper and pom.xml
 COPY mvnw .
-COPY mvnw.cmd .
-COPY .mvn/ .mvn/
+COPY .mvn .mvn
 COPY pom.xml .
 
-# Download dependencies (this layer will be cached if pom.xml hasn't changed)
-RUN ./mvnw dependency:go-offline -B
-
-# Copy the source code
-COPY src ./src
+# Copy source code
+COPY src src
 
 # Build the application
 RUN ./mvnw clean package -DskipTests
 
-# Expose the port the app runs on
+# Production stage
+FROM eclipse-temurin:21-jre-jammy
+
+WORKDIR /app
+
+# Create a non-root user
+RUN groupadd -r spring && useradd -r -g spring spring
+USER spring
+
+# Copy the built JAR from builder stage
+COPY --from=builder /app/target/autocare360-*.jar app.jar
+
+# Expose application port
 EXPOSE 8080
 
-# Run the jar file
-CMD ["java", "-jar", "target/autocare360-0.0.1-SNAPSHOT.jar"]
+# Add health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

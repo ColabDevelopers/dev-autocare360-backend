@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: autocare360-prod
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+commonLabels:
+  app: autocare360
+  managed-by: kustomize
+
+images:
+  - name: your-docker-username/autocare360
+    newName: your-docker-username/autocare360
+    newTag: latest
+
+replicas:
+  - name: autocare360
+    count: 3

@@ -1,0 +1,29 @@
+# .gitignore entries for DevOps files
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.production
+
+# Terraform
+infrastructure/terraform/.terraform/
+infrastructure/terraform/*.tfstate
+infrastructure/terraform/*.tfstate.*
+infrastructure/terraform/.terraform.lock.hcl
+infrastructure/terraform/terraform.tfvars
+
+# Kubernetes secrets (example files are OK)
+infrastructure/kubernetes/base/secrets.yaml
+
+# Logs
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
