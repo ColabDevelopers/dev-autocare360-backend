@@ -11,22 +11,16 @@ import java.util.List;
 @Repository
 public interface JobAssignmentRepository extends JpaRepository<JobAssignment, Long> {
     
-    // Find all active assignments for an employee
+    List<JobAssignment> findByEmployeeIdAndActiveTrue(Long employeeId);
+    
+    List<JobAssignment> findByWorkItemIdAndActiveTrue(Long workItemId);
+    
     @Query("SELECT ja FROM JobAssignment ja WHERE ja.employeeId = :employeeId AND ja.active = true")
     List<JobAssignment> findActiveByEmployeeId(@Param("employeeId") Long employeeId);
     
-    // Find all assignments for a work item
-    List<JobAssignment> findByWorkItemId(Long workItemId);
-    
-    // Count active assignments for an employee
-    @Query("SELECT COUNT(ja) FROM JobAssignment ja WHERE ja.employeeId = :employeeId AND ja.active = true")
-    Long countActiveByEmployeeId(@Param("employeeId") Long employeeId);
-    
-    // Find active assignment for specific work item and employee
-    @Query("SELECT ja FROM JobAssignment ja WHERE ja.workItemId = :workItemId " +
-           "AND ja.employeeId = :employeeId AND ja.active = true")
+    @Query("SELECT ja FROM JobAssignment ja WHERE ja.workItemId = :workItemId AND ja.employeeId = :employeeId AND ja.active = true")
     JobAssignment findActiveByWorkItemIdAndEmployeeId(
-        @Param("workItemId") Long workItemId,
+        @Param("workItemId") Long workItemId, 
         @Param("employeeId") Long employeeId
     );
 }

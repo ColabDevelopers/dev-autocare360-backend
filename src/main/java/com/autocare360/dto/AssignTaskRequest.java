@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
@@ -12,9 +12,9 @@ import javax.validation.constraints.NotNull;
 public class AssignTaskRequest {
     @NotNull(message = "Work item ID is required")
     private Long workItemId;
-    
+
     @NotNull(message = "Employee ID is required")
     private Long employeeId;
-    
+
     private String roleOnJob; // Optional, defaults to "Technician"
 }
