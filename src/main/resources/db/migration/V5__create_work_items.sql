@@ -1,9 +1,9 @@
 -- Create work_items table
 CREATE TABLE IF NOT EXISTS work_items (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(250) NOT NULL,
     type VARCHAR(50) NOT NULL COMMENT 'appointment, project',
-    status VARCHAR(50) NOT NULL DEFAULT 'pending' COMMENT 'pending, in_progress, completed, cancelled',
+    status VARCHAR(40) NOT NULL DEFAULT 'pending' COMMENT 'pending, in_progress, completed, cancelled',
     customer_id BIGINT,
     description TEXT,
     estimated_hours DOUBLE,

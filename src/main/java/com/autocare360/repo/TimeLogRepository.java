@@ -56,7 +56,7 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, Long> {
         @Param("employeeId") Long employeeId,
         @Param("appointmentId") Long appointmentId);
 
-    // Employee Dashboard Queries - Find by date range ordered by date (for weekly workload chart)
+    
     List<TimeLog> findByEmployee_IdAndDateBetweenOrderByDateAsc(
         Long employeeId, LocalDate startDate, LocalDate endDate);
 }
