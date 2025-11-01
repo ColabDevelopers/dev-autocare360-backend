@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +53,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/employee/dashboard")
 @CrossOrigin(origins = "http://localhost:3000")
 public class EmployeeDashboardController {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmployeeDashboardController.class);
 
     @Autowired
     private AppointmentRepository appointmentRepository;
@@ -290,24 +294,45 @@ public class EmployeeDashboardController {
         Long employeeId = authUtil.getUserIdFromAuth(authentication);
         
         // Calculate date range
-        LocalDate endDate = LocalDate.now();
+        LocalDate today = LocalDate.now();
         LocalDate startDate;
+        LocalDate endDate;
+        
         switch (period.toLowerCase()) {
             case "week":
-                startDate = endDate.with(DayOfWeek.MONDAY);
+                startDate = today.with(DayOfWeek.MONDAY);
+                endDate = today.with(DayOfWeek.SUNDAY);
                 break;
             case "year":
-                startDate = endDate.withDayOfYear(1);
+                startDate = today.withDayOfYear(1);
+                endDate = today.withDayOfYear(today.lengthOfYear());
                 break;
             case "month":
             default:
-                startDate = endDate.withDayOfMonth(1);
+                startDate = today.withDayOfMonth(1);
+                endDate = today.withDayOfMonth(today.lengthOfMonth());
                 break;
         }
+        
+        // DEBUG: Log date range and employee ID
+        logger.info("🔍 Task Distribution Debug:");
+        logger.info("   Employee ID: {}", employeeId);
+        logger.info("   Start Date: {}", startDate);
+        logger.info("   End Date: {}", endDate);
+        logger.info("   Period: {}", period);
         
         // Fetch appointments in range
         List<Appointment> appointments = appointmentRepository
             .findByAssignedEmployee_IdAndDateBetween(employeeId, startDate, endDate);
+        
+        // DEBUG: Log results
+        logger.info("   Appointments Found: {}", appointments.size());
+        if (!appointments.isEmpty()) {
+            logger.info("   Sample appointments:");
+            appointments.stream().limit(3).forEach(a -> 
+                logger.info("      - {} on {}", a.getService(), a.getDate())
+            );
+        }
         
         // Group by service and count
         Map<String, Long> countByService = appointments.stream()
