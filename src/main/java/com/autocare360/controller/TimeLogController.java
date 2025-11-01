@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +40,6 @@ import com.autocare360.repo.AppointmentRepository;
 import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.TimeLogRepository;
 import com.autocare360.repo.TimerRepository;
-import com.autocare360.util.AuthUtil;
 
 import jakarta.validation.Valid;
 
@@ -61,25 +59,23 @@ public class TimeLogController {
     
     @Autowired
     private TimerRepository timerRepository;
-    
-    @Autowired
-    private AuthUtil authUtil;
+
+    // HARDCODED EMPLOYEE ID FOR NOW (Replace with authentication later)
+    private static final Long CURRENT_EMPLOYEE_ID = 1L;
 
     // 1. GET /api/time-logs - Get all time logs for employee
     @GetMapping
     public ResponseEntity<List<TimeLogResponseDTO>> getTimeLogs(
             @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate,
-            Authentication authentication) {
+            @RequestParam(required = false) LocalDate endDate) {
         
-        Long employeeId = authUtil.getUserIdFromAuth(authentication);
         List<TimeLog> timeLogs;
         
         if (startDate != null && endDate != null) {
             timeLogs = timeLogRepository.findByEmployee_IdAndDateBetweenOrderByDateDescCreatedAtDesc(
-                employeeId, startDate, endDate);
+                CURRENT_EMPLOYEE_ID, startDate, endDate);
         } else {
-            timeLogs = timeLogRepository.findByEmployee_IdOrderByDateDescCreatedAtDesc(employeeId);
+            timeLogs = timeLogRepository.findByEmployee_IdOrderByDateDescCreatedAtDesc(CURRENT_EMPLOYEE_ID);
         }
         
         List<TimeLogResponseDTO> response = timeLogs.stream()
@@ -91,12 +87,10 @@ public class TimeLogController {
 
     // 2. POST /api/time-logs - Create new time log
     @PostMapping
-    public ResponseEntity<?> createTimeLog(@Valid @RequestBody CreateTimeLogRequestDTO request,Authentication authentication) {
+    public ResponseEntity<?> createTimeLog(@Valid @RequestBody CreateTimeLogRequestDTO request) {
         try {
-            Long employeeId = authUtil.getUserIdFromAuth(authentication);
-            
             // Validate employee
-            Employee employee = employeeRepository.findById(employeeId)
+            Employee employee = employeeRepository.findById(CURRENT_EMPLOYEE_ID)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
             
             // Validate appointment
@@ -126,7 +120,7 @@ public class TimeLogController {
             TimeLog savedTimeLog = timeLogRepository.save(timeLog);
             
             // Update appointment actual hours
-            updateAppointmentActualHours(appointment, employeeId);
+            updateAppointmentActualHours(appointment);
             
             TimeLogResponseDTO response = mapToResponseDTO(savedTimeLog);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -143,16 +137,13 @@ public class TimeLogController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTimeLog(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateTimeLogRequestDTO request,
-            Authentication authentication) {
+            @Valid @RequestBody UpdateTimeLogRequestDTO request) {
         try {
-            Long employeeId = authUtil.getUserIdFromAuth(authentication);
-            
             TimeLog timeLog = timeLogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Time log not found"));
             
             // Verify ownership
-            if (!timeLog.getEmployeeId().equals(employeeId)) {
+            if (!timeLog.getEmployeeId().equals(CURRENT_EMPLOYEE_ID)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("You can only edit your own time logs");
             }
@@ -189,7 +180,7 @@ public class TimeLogController {
             TimeLog updatedTimeLog = timeLogRepository.save(timeLog);
             
             // Update appointment actual hours
-            updateAppointmentActualHours(timeLog.getAppointment(), employeeId);
+            updateAppointmentActualHours(timeLog.getAppointment());
             
             TimeLogResponseDTO response = mapToResponseDTO(updatedTimeLog);
             return ResponseEntity.ok(response);
@@ -204,16 +195,13 @@ public class TimeLogController {
 
     // 4. DELETE /api/time-logs/{id} - Delete time log
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTimeLog(@PathVariable Long id,
-                                           Authentication authentication) {
+    public ResponseEntity<?> deleteTimeLog(@PathVariable Long id) {
         try {
-            Long employeeId = authUtil.getUserIdFromAuth(authentication);
-            
             TimeLog timeLog = timeLogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Time log not found"));
             
             // Verify ownership
-            if (!timeLog.getEmployeeId().equals(employeeId)) {
+            if (!timeLog.getEmployeeId().equals(CURRENT_EMPLOYEE_ID)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("You can only delete your own time logs");
             }
@@ -223,7 +211,7 @@ public class TimeLogController {
             timeLogRepository.delete(timeLog);
             
             // Update appointment actual hours
-            updateAppointmentActualHours(appointment, employeeId);
+            updateAppointmentActualHours(appointment);
             
             return ResponseEntity.noContent().build();
             
@@ -237,23 +225,21 @@ public class TimeLogController {
 
     // 5. GET /api/time-logs/summary - Get statistics
     @GetMapping("/summary")
-    public ResponseEntity<TimeLogSummaryDTO> getTimeLogSummary(Authentication authentication) {
-        Long employeeId = authUtil.getUserIdFromAuth(authentication);
-        
+    public ResponseEntity<TimeLogSummaryDTO> getTimeLogSummary() {
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.with(DayOfWeek.MONDAY);
         LocalDate weekEnd = today.with(DayOfWeek.SUNDAY);
         
         // Calculate total hours today
         BigDecimal totalHoursToday = timeLogRepository
-            .sumHoursByEmployeeAndDate(employeeId, today);
+            .sumHoursByEmployeeAndDate(CURRENT_EMPLOYEE_ID, today);
         
         // Calculate total hours this week
         BigDecimal totalHoursWeek = timeLogRepository
-            .sumHoursByEmployeeAndDateRange(employeeId, weekStart, weekEnd);
+            .sumHoursByEmployeeAndDateRange(CURRENT_EMPLOYEE_ID, weekStart, weekEnd);
         
         // Count total entries
-        Long count = timeLogRepository.countByEmployee_Id(employeeId);
+        Long count = timeLogRepository.countByEmployee_Id(CURRENT_EMPLOYEE_ID);
         Integer totalEntries = count != null ? count.intValue() : 0;
         
         // Calculate efficiency rate (Actual hours / Expected 40 hours * 100)
@@ -299,17 +285,14 @@ public class TimeLogController {
 
     // 7. POST /api/time-logs/timer/start - Start timer
     @PostMapping("/timer/start")
-    public ResponseEntity<?> startTimer(@Valid @RequestBody StartTimerRequestDTO request,
-                                        Authentication authentication) {
+    public ResponseEntity<?> startTimer(@Valid @RequestBody StartTimerRequestDTO request) {
         try {
-            Long employeeId = authUtil.getUserIdFromAuth(authentication);
-            
             // Check if employee already has active timer
-            if (timerRepository.existsByEmployee_IdAndIsActiveTrue(employeeId)) {
+            if (timerRepository.existsByEmployee_IdAndIsActiveTrue(CURRENT_EMPLOYEE_ID)) {
                 return ResponseEntity.badRequest().body("You already have an active timer running");
             }
             
-            Employee employee = employeeRepository.findById(employeeId)
+            Employee employee = employeeRepository.findById(CURRENT_EMPLOYEE_ID)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
             
             Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
@@ -345,15 +328,13 @@ public class TimeLogController {
 
     // 8. POST /api/time-logs/timer/stop - Stop timer
     @PostMapping("/timer/stop")
-    public ResponseEntity<?> stopTimer(@Valid @RequestBody StopTimerRequestDTO request, Authentication authentication) {
+    public ResponseEntity<?> stopTimer(@Valid @RequestBody StopTimerRequestDTO request) {
         try {
-            Long employeeId = authUtil.getUserIdFromAuth(authentication);
-            
             Timer timer = timerRepository.findById(request.getTimerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Timer not found"));
             
             // Verify ownership
-            if (!timer.getEmployeeId().equals(employeeId)) {
+            if (!timer.getEmployeeId().equals(CURRENT_EMPLOYEE_ID)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("This timer does not belong to you");
             }
@@ -392,7 +373,7 @@ public class TimeLogController {
             timerRepository.save(timer);
             
             // Update appointment actual hours
-            updateAppointmentActualHours(timer.getAppointment(), employeeId);
+            updateAppointmentActualHours(timer.getAppointment());
             
             TimeLogResponseDTO response = mapToResponseDTO(savedTimeLog);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -403,40 +384,6 @@ public class TimeLogController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error stopping timer: " + e.getMessage());
         }
-    }
-
-    // 9. GET /api/time-logs/timer/active - Get active timer
-    @GetMapping("/timer/active")
-    public ResponseEntity<TimerResponseDTO> getActiveTimer(Authentication authentication) {
-        Long employeeId = authUtil.getUserIdFromAuth(authentication);
-        
-        // Find active timer for employee
-        return timerRepository.findByEmployee_IdAndIsActiveTrue(employeeId)
-            .map(timer -> {
-                // Calculate elapsed time
-                LocalDateTime now = LocalDateTime.now();
-                long elapsedSeconds = Duration.between(timer.getStartTime(), now).getSeconds();
-                BigDecimal elapsedHours = new BigDecimal(elapsedSeconds)
-                    .divide(new BigDecimal("3600"), 2, RoundingMode.HALF_UP);
-                
-                // Build response
-                TimerResponseDTO response = new TimerResponseDTO();
-                response.setTimerId(timer.getId());
-                response.setAppointmentId(timer.getAppointmentId());
-                response.setProjectName(timer.getProjectName());
-                response.setStartTime(timer.getStartTime());
-                response.setElapsedSeconds((int) elapsedSeconds);
-                response.setElapsedHours(elapsedHours);
-                response.setIsActive(true);
-                
-                return ResponseEntity.ok(response);
-            })
-            .orElseGet(() -> {
-                // No active timer - return empty response
-                TimerResponseDTO response = new TimerResponseDTO();
-                response.setIsActive(false);
-                return ResponseEntity.ok(response);
-            });
     }
 
     // Helper method to map TimeLog to DTO
@@ -459,10 +406,10 @@ public class TimeLogController {
     }
 
     // Helper method to update appointment actual hours
-    private void updateAppointmentActualHours(Appointment appointment, Long employeeId) {
+    private void updateAppointmentActualHours(Appointment appointment) {
         if (appointment != null) {
             List<TimeLog> appointmentTimeLogs = timeLogRepository
-                .findByEmployee_IdOrderByDateDescCreatedAtDesc(employeeId)
+                .findByEmployee_IdOrderByDateDescCreatedAtDesc(CURRENT_EMPLOYEE_ID)
                 .stream()
                 .filter(tl -> tl.getAppointmentId().equals(appointment.getId()))
                 .collect(Collectors.toList());

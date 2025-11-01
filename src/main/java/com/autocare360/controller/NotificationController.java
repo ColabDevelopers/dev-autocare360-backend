@@ -4,6 +4,7 @@ import com.autocare360.dto.*;
 import com.autocare360.service.NotificationService;
 import com.autocare360.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -105,7 +107,9 @@ public class NotificationController {
      */
     @GetMapping("/preferences")
     public ResponseEntity<NotificationPreferenceResponse> getPreferences(Authentication authentication) {
+        log.info("GET /api/notifications/preferences - Authentication: {}", authentication != null ? authentication.getName() : "null");
         Long userId = authUtil.getUserIdFromAuth(authentication);
+        log.info("Fetching preferences for user ID: {}", userId);
         NotificationPreferenceResponse preferences = notificationService.getUserPreferences(userId);
         return ResponseEntity.ok(preferences);
     }
@@ -117,7 +121,10 @@ public class NotificationController {
     public ResponseEntity<NotificationPreferenceResponse> updatePreferences(
             @RequestBody NotificationPreferenceRequest request,
             Authentication authentication) {
+        log.info("PUT /api/notifications/preferences - Authentication: {}", authentication != null ? authentication.getName() : "null");
+        log.info("Request body: {}", request);
         Long userId = authUtil.getUserIdFromAuth(authentication);
+        log.info("Updating preferences for user ID: {}", userId);
         NotificationPreferenceResponse preferences = notificationService.updateUserPreferences(userId, request);
         return ResponseEntity.ok(preferences);
     }
