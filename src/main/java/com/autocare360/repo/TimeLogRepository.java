@@ -37,4 +37,15 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, Long> {
     
     // Count total entries for employee
     Long countByEmployee_Id(Long employeeId);
+    
+    // Employee Dashboard Queries - Sum hours by appointment
+    @Query("SELECT COALESCE(SUM(t.hours), 0) FROM TimeLog t " +
+           "WHERE t.employee.id = :employeeId AND t.appointment.id = :appointmentId")
+    BigDecimal sumHoursByEmployeeAndAppointment(
+        @Param("employeeId") Long employeeId,
+        @Param("appointmentId") Long appointmentId);
+    
+    // Employee Dashboard Queries - Find by date range ordered by date (for weekly workload chart)
+    List<TimeLog> findByEmployee_IdAndDateBetweenOrderByDateAsc(
+        Long employeeId, LocalDate startDate, LocalDate endDate);
 }
