@@ -233,9 +233,14 @@ public class NotificationService {
      * Get user notification preferences
      */
     public NotificationPreferenceResponse getUserPreferences(Long userId) {
+        log.info("Getting notification preferences for user ID: {}", userId);
         NotificationPreference preference = preferenceRepository.findByUserId(userId)
-                .orElse(createDefaultPreference(userId));
+                .orElseGet(() -> {
+                    log.info("No preferences found for user {}, creating default", userId);
+                    return createDefaultPreference(userId);
+                });
 
+        log.info("Returning preferences for user {}: {}", userId, preference.getId());
         return mapPreferenceToResponse(preference);
     }
 
@@ -244,8 +249,12 @@ public class NotificationService {
      */
     @Transactional
     public NotificationPreferenceResponse updateUserPreferences(Long userId, NotificationPreferenceRequest request) {
+        log.info("Updating notification preferences for user ID: {}", userId);
         NotificationPreference preference = preferenceRepository.findByUserId(userId)
-                .orElse(createDefaultPreference(userId));
+                .orElseGet(() -> {
+                    log.info("No preferences found for user {}, creating default", userId);
+                    return createDefaultPreference(userId);
+                });
 
         if (request.getEmailNotifications() != null) {
             preference.setEmailNotifications(request.getEmailNotifications());

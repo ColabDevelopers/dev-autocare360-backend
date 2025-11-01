@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCare360 - WebSocket Notification Tester</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .status {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .status.disconnected {
+            background: #fee;
+            color: #c33;
+        }
+        
+        .status.connected {
+            background: #efe;
+            color: #3c3;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-success {
+            background: #2ecc71;
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .messages {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .message {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .message-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .message-body {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .message-data {
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 AutoCare360 WebSocket Tester</h1>
+        
+        <!-- Connection Card -->
+        <div class="card">
+            <h2>🔌 Connection</h2>
+            <div id="status" class="status disconnected">
+                ⚫ Disconnected
+            </div>
+            
+            <div class="form-group">
+                <label>Backend URL</label>
+                <input type="text" id="backendUrl" value="http://localhost:8080" />
+            </div>
+            
+            <div class="form-group">
+                <label>JWT Token (Login first to get token)</label>
+                <textarea id="jwtToken" rows="3" placeholder="Paste your JWT token here after logging in"></textarea>
+            </div>
+            
+            <button id="connectBtn" onclick="connect()">Connect to WebSocket</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled class="btn-danger">Disconnect</button>
+        </div>
+        
+        <!-- Get JWT Token Card -->
+        <div class="card">
+            <h2>🔑 Get JWT Token</h2>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" value="nimal.admin@gmail.com" />
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" value="password" />
+            </div>
+            
+            <button onclick="login()" class="btn-success">Login & Get Token</button>
+        </div>
+        
+        <div class="grid">
+            <!-- Send Messages Card -->
+            <div class="card">
+                <h2>📤 Send WebSocket Messages</h2>
+                
+                <div class="form-group">
+                    <label>Message Type</label>
+                    <select id="messageType" onchange="updateMessageForm()">
+                        <option value="service-progress">Service Progress Update</option>
+                        <option value="appointment">Appointment Notification</option>
+                        <option value="announce">Admin Announcement</option>
+                        <option value="connect">User Connect</option>
+                    </select>
+                </div>
+                
+                <div id="messageForm">
+                    <!-- Dynamic form fields will be inserted here -->
+                </div>
+                
+                <button onclick="sendMessage()" id="sendBtn" disabled>Send Message</button>
+            </div>
+            
+            <!-- Received Messages Card -->
+            <div class="card">
+                <h2>📥 Received Messages</h2>
+                <button onclick="clearMessages()" class="btn-danger" style="margin-bottom: 10px;">Clear All</button>
+                <div id="messages" class="messages">
+                    <p style="color: #999; text-align: center;">No messages yet. Connect to start receiving.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let stompClient = null;
+        let socket = null;
+        
+        // Login to get JWT token
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const backendUrl = document.getElementById('backendUrl').value;
+            
+            try {
+                const response = await fetch(`${backendUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Login failed');
+                }
+                
+                const data = await response.json();
+                document.getElementById('jwtToken').value = data.token;
+                
+                addReceivedMessage('System', 'Login Successful', `Logged in as ${data.email}`, {
+                    name: data.name,
+                    roles: data.roles
+                });
+            } catch (error) {
+                addReceivedMessage('Error', 'Login Failed', error.message, {});
+            }
+        }
+        
+        // Connect to WebSocket
+        function connect() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const token = document.getElementById('jwtToken').value;
+            
+            if (!token) {
+                alert('Please login first to get a JWT token!');
+                return;
+            }
+            
+            socket = new SockJS(`${backendUrl}/ws`);
+            stompClient = StompJs.Stomp.over(socket);
+            
+            stompClient.connect(
+                { 'Authorization': `Bearer ${token}` },
+                function(frame) {
+                    updateStatus(true);
+                    console.log('Connected: ' + frame);
+                    
+                    // Subscribe to personal notifications
+                    stompClient.subscribe('/user/queue/notifications', function(message) {
+                        const data = JSON.parse(message.body);
+                        addReceivedMessage('Personal Notification', data.title, data.message, data);
+                    });
+                    
+                    // Subscribe to service updates
+                    stompClient.subscribe('/topic/service-updates', function(message) {
+                        const data = JSON.parse(message.body);
+                        addReceivedMessage('Service Update', `Service ${data.status}`, 
+                            `${data.serviceName} for ${data.vehicleNumber}: ${data.currentStage}`, data);
+                    });
+                    
+                    // Subscribe to announcements
+                    stompClient.subscribe('/topic/announcements', function(message) {
+                        const data = JSON.parse(message.body);
+                        addReceivedMessage('Announcement', data.title || 'System Announcement', 
+                            data.message || message.body, data);
+                    });
+                    
+                    addReceivedMessage('System', 'Connected', 'WebSocket connection established', {});
+                },
+                function(error) {
+                    updateStatus(false);
+                    console.error('Connection error:', error);
+                    addReceivedMessage('Error', 'Connection Failed', error.message || 'Could not connect', {});
+                }
+            );
+        }
+        
+        // Disconnect from WebSocket
+        function disconnect() {
+            if (stompClient) {
+                stompClient.disconnect();
+                updateStatus(false);
+                addReceivedMessage('System', 'Disconnected', 'WebSocket connection closed', {});
+            }
+        }
+        
+        // Update connection status
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            if (connected) {
+                statusDiv.className = 'status connected';
+                statusDiv.innerHTML = '🟢 Connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                sendBtn.disabled = false;
+            } else {
+                statusDiv.className = 'status disconnected';
+                statusDiv.innerHTML = '⚫ Disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                sendBtn.disabled = true;
+            }
+        }
+        
+        // Update message form based on selected type
+        function updateMessageForm() {
+            const type = document.getElementById('messageType').value;
+            const formDiv = document.getElementById('messageForm');
+            
+            let html = '';
+            
+            switch(type) {
+                case 'service-progress':
+                    html = `
+                        <div class="form-group">
+                            <label>Service Name</label>
+                            <input type="text" id="serviceName" value="Oil Change" />
+                        </div>
+                        <div class="form-group">
+                            <label>Vehicle Number</label>
+                            <input type="text" id="vehicleNumber" value="ABC-123" />
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="status">
+                                <option value="PENDING">Pending</option>
+                                <option value="IN_PROGRESS" selected>In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Progress (%)</label>
+                            <input type="number" id="progress" value="50" min="0" max="100" />
+                        </div>
+                        <div class="form-group">
+                            <label>Current Stage</label>
+                            <input type="text" id="stage" value="Draining old oil" />
+                        </div>
+                    `;
+                    break;
+                
+                case 'appointment':
+                    html = `
+                        <div class="form-group">
+                            <label>Customer ID</label>
+                            <input type="number" id="customerId" value="2" />
+                        </div>
+                        <div class="form-group">
+                            <label>Appointment Details</label>
+                            <textarea id="details" rows="3">Your appointment is confirmed for tomorrow at 10:00 AM</textarea>
+                        </div>
+                    `;
+                    break;
+                
+                case 'announce':
+                    html = `
+                        <div class="form-group">
+                            <label>Announcement Message</label>
+                            <textarea id="announcement" rows="3">System maintenance scheduled for tonight at 11 PM</textarea>
+                        </div>
+                    `;
+                    break;
+                
+                case 'connect':
+                    html = `<p>No additional fields required. Just click Send to notify connection.</p>`;
+                    break;
+            }
+            
+            formDiv.innerHTML = html;
+        }
+        
+        // Send message via WebSocket
+        function sendMessage() {
+            if (!stompClient || !stompClient.connected) {
+                alert('Not connected to WebSocket!');
+                return;
+            }
+            
+            const type = document.getElementById('messageType').value;
+            let destination = '';
+            let payload = {};
+            
+            switch(type) {
+                case 'service-progress':
+                    destination = '/app/service/progress';
+                    payload = {
+                        serviceId: 1,
+                        serviceName: document.getElementById('serviceName').value,
+                        vehicleNumber: document.getElementById('vehicleNumber').value,
+                        customerId: 2,
+                        status: document.getElementById('status').value,
+                        progressPercentage: parseInt(document.getElementById('progress').value),
+                        currentStage: document.getElementById('stage').value
+                    };
+                    break;
+                
+                case 'appointment':
+                    destination = '/app/appointment/notify';
+                    payload = {
+                        customerId: parseInt(document.getElementById('customerId').value),
+                        message: document.getElementById('details').value
+                    };
+                    break;
+                
+                case 'announce':
+                    destination = '/app/admin/announce';
+                    payload = document.getElementById('announcement').value;
+                    break;
+                
+                case 'connect':
+                    destination = '/app/user/connect';
+                    payload = {};
+                    break;
+            }
+            
+            stompClient.send(destination, {}, JSON.stringify(payload));
+            addReceivedMessage('Sent', `Message Sent to ${destination}`, 
+                `Type: ${type}`, payload);
+        }
+        
+        // Add received message to display
+        function addReceivedMessage(type, title, message, data) {
+            const messagesDiv = document.getElementById('messages');
+            
+            if (messagesDiv.querySelector('p')) {
+                messagesDiv.innerHTML = '';
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span><strong>${type}</strong></span>
+                    <span>${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="message-title">${title}</div>
+                <div class="message-body">${message}</div>
+                ${Object.keys(data).length > 0 ? 
+                    `<div class="message-data">${JSON.stringify(data, null, 2)}</div>` : 
+                    ''}
+            `;
+            
+            messagesDiv.insertBefore(messageDiv, messagesDiv.firstChild);
+        }
+        
+        // Clear all messages
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = 
+                '<p style="color: #999; text-align: center;">No messages yet. Connect to start receiving.</p>';
+        }
+        
+        // Initialize form on page load
+        updateMessageForm();
+    </script>
+</body>
+</html>
