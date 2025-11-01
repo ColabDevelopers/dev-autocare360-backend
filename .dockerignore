@@ -1,8 +1,40 @@
-target/
-.git/
-.github/
-README.md
-docs/
-*.md
+# Git and version control
+.git
 .gitignore
-.dockerignore
+.gitattributes
+
+# Build output
+target/
+
+# Maven wrapper (using container's Maven)
+.mvn/
+mvnw
+mvnw.cmd
+
+# Documentation
+*.md
+docs/
+
+# Test files
+websocket-tester.html
+src/test/
+
+# Example/template files
+flyway.properties.example
+src/main/resources/application.properties.example
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+*.tmp
+logs/

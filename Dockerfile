@@ -1,26 +1,24 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:21-jdk-slim
-
-# Set the working directory in the container
+# Build stage
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml
-COPY mvnw .
-COPY mvnw.cmd .
-COPY .mvn/ .mvn/
+# Copy pom.xml and download dependencies
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-# Download dependencies (this layer will be cached if pom.xml hasn't changed)
-RUN ./mvnw dependency:go-offline -B
-
-# Copy the source code
+# Copy source code and build
 COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Build the application
-RUN ./mvnw clean package -DskipTests
+# Runtime stage
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
 
-# Expose the port the app runs on
+# Copy the built jar file
+COPY --from=build /app/target/autocare360-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose port
 EXPOSE 8080
 
-# Run the jar file
-CMD ["java", "-jar", "target/autocare360-0.0.1-SNAPSHOT.jar"]
+# Run the application
+ENTRYPOINT ["java","-jar","app.jar"]
