@@ -1,23 +1,30 @@
 package com.autocare360.service;
 
-import com.autocare360.dto.*;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.autocare360.dto.AppointmentNotification;
+import com.autocare360.dto.NotificationMessage;
+import com.autocare360.dto.NotificationPreferenceRequest;
+import com.autocare360.dto.NotificationPreferenceResponse;
+import com.autocare360.dto.NotificationResponse;
+import com.autocare360.dto.ServiceProgressUpdate;
 import com.autocare360.entity.Notification;
 import com.autocare360.entity.NotificationPreference;
 import com.autocare360.repo.NotificationPreferenceRepository;
 import com.autocare360.repo.NotificationRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

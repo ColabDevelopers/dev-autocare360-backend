@@ -1,11 +1,13 @@
 package com.autocare360.util;
 
-import com.autocare360.entity.User;
-import com.autocare360.repo.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+
+import com.autocare360.entity.User;
+import com.autocare360.repo.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor

@@ -1,11 +1,17 @@
 # Local documents not committed
 docs/*.pdf
 
+# Local documents not committed
+docs/*.pdf
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+# Environment variables
+.env
 
 # Environment variables
 .env
