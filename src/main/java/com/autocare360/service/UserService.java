@@ -1,13 +1,16 @@
 package com.autocare360.service;
 
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.autocare360.dto.UserResponse;
 import com.autocare360.entity.User;
 import com.autocare360.repo.UserRepository;
-import java.util.Locale;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +47,23 @@ public class UserService {
 		User user = userRepository.findById(userId).orElseThrow();
 		user.setPhone(phone);
 		userRepository.save(user);
+	}
+
+	public java.util.List<UserResponse> getAllCustomers() {
+		return userRepository.findAll().stream()
+				.filter(user -> user.getRoles().stream()
+						.anyMatch(role -> role.getName().equalsIgnoreCase("CUSTOMER")))
+				.map(user -> UserResponse.builder()
+						.id(user.getId())
+						.email(user.getEmail())
+						.name(user.getName())
+						.roles(user.getRoles().stream()
+								.map(r -> r.getName().toLowerCase(Locale.ROOT))
+								.collect(Collectors.toList()))
+						.status(user.getStatus() == null ? "Active" : user.getStatus())
+						.phone(user.getPhone())
+						.build())
+				.collect(Collectors.toList());
 	}
 }
 

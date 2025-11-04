@@ -14,6 +14,15 @@ import com.autocare360.entity.Appointment;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
     List<Appointment> findByStatusOrderByDateAscTimeAsc(String status);
+    
+    // Customer queries
+    List<Appointment> findByUser_IdOrderByDateDescTimeDesc(Long userId);
+    
+    // Find appointments by date and technician for availability check
+    List<Appointment> findByDateAndTechnicianAndStatusNot(LocalDate date, String technician, String excludeStatus);
+    
+    // Find appointments by date and time for availability check
+    List<Appointment> findByDateAndTimeAndStatusNot(LocalDate date, java.time.LocalTime time, String excludeStatus);
 
     // Employee Dashboard Queries - Find by employee and status
     List<Appointment> findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(

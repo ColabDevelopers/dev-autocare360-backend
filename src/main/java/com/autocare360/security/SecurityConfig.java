@@ -1,6 +1,5 @@
 package com.autocare360.security;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableMethodSecurity
@@ -31,8 +32,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-						.requestMatchers("/ws/").permitAll() // Allow WebSocket connections
+						.requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
 						.requestMatchers("/api/vehicles/**").hasAnyRole("ADMIN", "CUSTOMER")
+						.requestMatchers("/api/employees/**").authenticated() // Allow authenticated users to view employees
+						.requestMatchers("/api/appointments/**").authenticated() // Allow authenticated users to manage appointments
+						.requestMatchers("/api/availability/**").authenticated() // Allow authenticated users to check availability
 						.anyRequest().authenticated()
                 )
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

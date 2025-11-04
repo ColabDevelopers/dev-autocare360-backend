@@ -1,6 +1,7 @@
 package com.autocare360.repo;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -15,4 +16,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     // Find employee by email
     Employee findByEmail(String email);
+    
+    // Find employee by name
+    Optional<Employee> findByName(String name);
 }

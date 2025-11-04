@@ -380,5 +380,3 @@ paths:
         '204': { description: Deleted }
         '404': { description: Not Found }
         '403': { description: Forbidden }
-
-
