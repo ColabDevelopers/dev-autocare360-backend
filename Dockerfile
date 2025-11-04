@@ -15,7 +15,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy the built jar file
-COPY --from=build /app/target/autocare360-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
 
 # Expose port
 EXPOSE 8080
