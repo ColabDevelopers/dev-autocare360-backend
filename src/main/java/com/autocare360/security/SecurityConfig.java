@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+						.requestMatchers("/ws/").permitAll() // Allow WebSocket connections
 						.requestMatchers("/api/vehicles/**").hasAnyRole("ADMIN", "CUSTOMER")
 						.anyRequest().authenticated()
                 )
