@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +22,12 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, Long> {
     // Find time logs by employee and date range
     List<TimeLog> findByEmployee_IdAndDateBetweenOrderByDateDescCreatedAtDesc(
             Long employeeId, LocalDate startDate, LocalDate endDate);
+
+    // Pageable queries for time logs
+    Page<TimeLog> findByEmployee_Id(Long employeeId, Pageable pageable);
+
+    Page<TimeLog> findByEmployee_IdAndDateBetween(
+            Long employeeId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     // Find time logs by employee and specific date
     List<TimeLog> findByEmployee_IdAndDate(Long employeeId, LocalDate date);

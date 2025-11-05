@@ -6,10 +6,16 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -65,33 +71,50 @@ public class TimeLogController {
     @Autowired
     private AuthUtil authUtil;
 
-    // 1. GET /api/time-logs - Get all time logs for employee
+    // 1. GET /api/time-logs - Get all time logs for employee (with pagination)
     @GetMapping
-    public ResponseEntity<List<TimeLogResponseDTO>> getTimeLogs(
+    public ResponseEntity<?> getTimeLogs(
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
 
         Long employeeId = authUtil.getUserIdFromAuth(authentication);
-        List<TimeLog> timeLogs;
+        
+        // Create pageable with sorting by date desc, then createdAt desc
+        Pageable pageable = PageRequest.of(page, size, 
+            Sort.by(Sort.Direction.DESC, "date").and(Sort.by(Sort.Direction.DESC, "createdAt")));
+
+        Page<TimeLog> timeLogsPage;
 
         if (startDate != null && endDate != null) {
-            timeLogs = timeLogRepository.findByEmployee_IdAndDateBetweenOrderByDateDescCreatedAtDesc(
-                    employeeId, startDate, endDate);
+            timeLogsPage = timeLogRepository.findByEmployee_IdAndDateBetween(
+                    employeeId, startDate, endDate, pageable);
         } else {
-            timeLogs = timeLogRepository.findByEmployee_IdOrderByDateDescCreatedAtDesc(employeeId);
+            timeLogsPage = timeLogRepository.findByEmployee_Id(employeeId, pageable);
         }
 
-        List<TimeLogResponseDTO> response = timeLogs.stream()
+        List<TimeLogResponseDTO> content = timeLogsPage.getContent().stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
+
+        // Create response with pagination metadata
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", content);
+        response.put("currentPage", timeLogsPage.getNumber());
+        response.put("totalItems", timeLogsPage.getTotalElements());
+        response.put("totalPages", timeLogsPage.getTotalPages());
+        response.put("pageSize", timeLogsPage.getSize());
+        response.put("hasNext", timeLogsPage.hasNext());
+        response.put("hasPrevious", timeLogsPage.hasPrevious());
 
         return ResponseEntity.ok(response);
     }
 
     // 2. POST /api/time-logs - Create new time log
     @PostMapping
-    public ResponseEntity<?> createTimeLog(@Valid @RequestBody CreateTimeLogRequestDTO request,Authentication authentication) {
+    public ResponseEntity<?> createTimeLog(@Valid @RequestBody CreateTimeLogRequestDTO request, Authentication authentication) {
         try {
             Long employeeId = authUtil.getUserIdFromAuth(authentication);
 
