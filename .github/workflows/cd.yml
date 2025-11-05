@@ -44,29 +44,37 @@ jobs:
         push: true
         tags: ghcr.io/${{ env.REPO_NAME }}:latest
 
-    - name: Create kubeconfig
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v4
+
+    - name: Set kubeconfig content
       run: |
-        mkdir -p $HOME/.kube
-        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+        echo "KUBECONFIG_CONTENT<<EOF" >> $GITHUB_ENV
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Set context
+      uses: azure/k8s-set-context@v4
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ env.KUBECONFIG_CONTENT }}
 
     - name: Deploy to Kubernetes
-      uses: azure/k8s-deploy@v5
-      with:
-        manifests: |
-          deployment/kubernetes/base/namespace.yaml
-          deployment/kubernetes/base/configmap.yaml
-          deployment/kubernetes/base/secrets.yaml
-          deployment/kubernetes/base/app-deployment.yaml
-          deployment/kubernetes/base/app-service.yaml
-          deployment/kubernetes/base/db-deployment.yaml
-          deployment/kubernetes/base/db-service.yaml
-          deployment/kubernetes/network/ingress.yaml
-          deployment/kubernetes/volumes/mysql-pvc.yaml
-          deployment/kubernetes/RBAC/serviceaccount.yaml
-          deployment/kubernetes/RBAC/role.yaml
-          deployment/kubernetes/RBAC/rolebinding.yaml
-        images: ghcr.io/${{ github.repository }}:latest
-        namespace: autocare360
+      run: |
+        kubectl apply -f deployment/kubernetes/base/namespace.yaml \
+                      -f deployment/kubernetes/base/configmap.yaml \
+                      -f deployment/kubernetes/base/secrets.yaml \
+                      -f deployment/kubernetes/base/app-deployment.yaml \
+                      -f deployment/kubernetes/base/app-service.yaml \
+                      -f deployment/kubernetes/base/db-deployment.yaml \
+                      -f deployment/kubernetes/base/db-service.yaml \
+                      -f deployment/kubernetes/network/ingress.yaml \
+                      -f deployment/kubernetes/volumes/mysql-pvc.yaml \
+                      -f deployment/kubernetes/RBAC/serviceaccount.yaml \
+                      -f deployment/kubernetes/RBAC/role.yaml \
+                      -f deployment/kubernetes/RBAC/rolebinding.yaml \
+                      --namespace autocare360 \
+                      --validate=false
 
     - name: Create Secrets
       run: |
