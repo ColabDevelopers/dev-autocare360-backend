@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+						.requestMatchers("/employee/**").hasRole("EMPLOYEE") // Employee-only endpoints
 						.requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
 						.requestMatchers("/api/vehicles/**").hasAnyRole("ADMIN", "CUSTOMER")
 						.requestMatchers("/api/employees/**").authenticated() // Allow authenticated users to view employees

@@ -47,6 +47,15 @@ public class AppointmentService {
 				.collect(Collectors.toList());
 	}
 
+	@Transactional(readOnly = true)
+	public List<AppointmentResponse> listByEmployeeAndStatus(Long employeeId, List<String> statuses) {
+		List<Appointment> appointments = appointmentRepository
+				.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(employeeId, statuses);
+		return appointments.stream()
+				.map(this::toResponse)
+				.collect(Collectors.toList());
+	}
+
 	@Transactional
 	public AppointmentResponse create(AppointmentRequest request) {
 		User user = userRepository.findById(request.getUserId())
