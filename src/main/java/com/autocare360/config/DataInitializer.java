@@ -13,8 +13,11 @@ import com.autocare360.entity.Employee;
 import com.autocare360.entity.User;
 import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.UserRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Component
+@Profile("!test")
 public class DataInitializer implements CommandLineRunner {
     
     @Autowired
@@ -22,6 +25,9 @@ public class DataInitializer implements CommandLineRunner {
     
     @Autowired
     private EmployeeRepository employeeRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     @Override
     public void run(String... args) throws Exception {
@@ -31,7 +37,7 @@ public class DataInitializer implements CommandLineRunner {
                 .email("john.doe@example.com")
                 .name("John Doe")
                 .phone("123-456-7890")
-                .passwordHash("hashedpassword") // dummy
+                .passwordHash(passwordEncoder.encode("SecureDefault123!"))
                 .status("ACTIVE")
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -40,7 +46,7 @@ public class DataInitializer implements CommandLineRunner {
                 .email("jane.smith@example.com")
                 .name("Jane Smith")
                 .phone("098-765-4321")
-                .passwordHash("hashedpassword") // dummy
+                .passwordHash(passwordEncoder.encode("SecureDefault123!"))
                 .status("ACTIVE")
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: autocare360-backend-service
+  namespace: autocare360
+spec:
+  selector:
+    app: autocare360-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

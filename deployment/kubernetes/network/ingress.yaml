@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: autocare360-ingress
+  namespace: autocare360
+spec:
+  rules:
+  - host: autocare360.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: autocare360-backend-service
+            port:
+              number: 8080

@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   user_id BIGINT NOT NULL,
   make VARCHAR(255),
   model VARCHAR(255),
-  year INT,
+  `year` INT,
   vin VARCHAR(255),
   license_plate VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

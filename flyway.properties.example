@@ -1,9 +1,0 @@
-# Flyway Configuration Template
-# Copy this file to flyway.properties and fill in your actual credentials
-
-flyway.url=jdbc:mysql://your-database-host:port/database-name?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&sslMode=DISABLED
-flyway.user=your-database-username
-flyway.password=your-database-password
-flyway.locations=filesystem:src/main/resources/db/migration
-flyway.baseline-version=5
-flyway.baseline-on-migrate=true
