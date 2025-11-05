@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,7 +60,8 @@ public class EmployeeDashboardController {
 
   @Autowired private TimeLogRepository timeLogRepository;
 
-  @Autowired private AuthUtil authUtil;
+    @Autowired
+    private AuthUtil authUtil;
 
   // 1. GET /api/employee/dashboard/summary - Dashboard statistics
   @GetMapping("/summary")
@@ -434,8 +436,8 @@ public class EmployeeDashboardController {
         appointment.setNotes(existingNotes + newNote);
       }
 
-      // Save
-      Appointment updated = appointmentRepository.save(appointment);
+            // Save
+            Appointment updated = appointmentRepository.save(appointment);
 
       // Build response
       JobStatusUpdateResponseDTO response = new JobStatusUpdateResponseDTO();
