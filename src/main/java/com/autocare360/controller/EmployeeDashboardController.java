@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,6 +61,8 @@ public class EmployeeDashboardController {
   @Autowired private TimeLogRepository timeLogRepository;
 
   @Autowired private AuthUtil authUtil;
+
+  @Autowired private SimpMessagingTemplate messagingTemplate;
 
   // 1. GET /api/employee/dashboard/summary - Dashboard statistics
   @GetMapping("/summary")
@@ -436,6 +439,27 @@ public class EmployeeDashboardController {
 
       // Save
       Appointment updated = appointmentRepository.save(appointment);
+
+      // Send real-time WebSocket update to customer
+      Map<String, Object> progressUpdate = new HashMap<>();
+      progressUpdate.put("type", "service_update");
+      progressUpdate.put("timestamp", LocalDateTime.now().toString());
+      
+      Map<String, Object> updateData = new HashMap<>();
+      updateData.put("serviceId", updated.getId());
+      updateData.put("status", updated.getStatus());
+      updateData.put("progress", updated.getProgress());
+      updateData.put("vehicle", updated.getVehicle());
+      updateData.put("service", updated.getService());
+      updateData.put("customerId", updated.getUserId());
+      
+      progressUpdate.put("data", updateData);
+      
+      // Broadcast to WebSocket topic
+      logger.info("📡 Broadcasting service update to /topic/service-updates: serviceId={}, progress={}%", 
+          updated.getId(), updated.getProgress());
+      messagingTemplate.convertAndSend("/topic/service-updates", progressUpdate);
+      logger.info("✅ WebSocket message sent successfully");
 
       // Build response
       JobStatusUpdateResponseDTO response = new JobStatusUpdateResponseDTO();
