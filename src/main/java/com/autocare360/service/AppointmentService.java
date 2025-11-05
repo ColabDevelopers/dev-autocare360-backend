@@ -14,10 +14,8 @@ import com.autocare360.dto.AppointmentRequest;
 import com.autocare360.dto.AppointmentResponse;
 import com.autocare360.dto.AvailabilityResponse;
 import com.autocare360.entity.Appointment;
-import com.autocare360.entity.Employee;
 import com.autocare360.entity.User;
 import com.autocare360.repo.AppointmentRepository;
-import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +26,7 @@ public class AppointmentService {
 
 	private final AppointmentRepository appointmentRepository;
 	private final UserRepository userRepository;
-	private final EmployeeRepository employeeRepository;
+	// Note: EmployeeRepository removed - using UserRepository for employees (users with employee_no)
 	private final SimpMessagingTemplate messagingTemplate;
 
 	@Transactional(readOnly = true)
@@ -71,9 +69,15 @@ public class AppointmentService {
 		appointment.setNotes(request.getNotes());
 		appointment.setTechnician(request.getTechnician());
 
-		// If technician is specified, try to find and assign employee
+		// If technician is specified, try to find and assign employee (user with employee_no)
 		if (request.getTechnician() != null && !request.getTechnician().isEmpty()) {
-			employeeRepository.findByName(request.getTechnician()).ifPresent(appointment::setAssignedEmployee);
+			final Appointment appt = appointment; // Make final for lambda
+			userRepository.findByName(request.getTechnician()).ifPresent(employee -> {
+				// Only assign if user has employee_no (is an employee)
+				if (employee.getEmployeeNo() != null && !employee.getEmployeeNo().isEmpty()) {
+					appt.setAssignedEmployee(employee);
+				}
+			});
 		}
 
 		appointment = appointmentRepository.save(appointment);
@@ -104,8 +108,14 @@ public class AppointmentService {
 		if (request.getNotes() != null) appointment.setNotes(request.getNotes());
 		if (request.getTechnician() != null) {
 			appointment.setTechnician(request.getTechnician());
-			// Update assigned employee if technician name is provided
-			employeeRepository.findByName(request.getTechnician()).ifPresent(appointment::setAssignedEmployee);
+			// Update assigned employee if technician name is provided (user with employee_no)
+			final Appointment appt = appointment; // Make final for lambda
+			userRepository.findByName(request.getTechnician()).ifPresent(employee -> {
+				// Only assign if user has employee_no (is an employee)
+				if (employee.getEmployeeNo() != null && !employee.getEmployeeNo().isEmpty()) {
+					appt.setAssignedEmployee(employee);
+				}
+			});
 		}
 
 		appointment = appointmentRepository.save(appointment);
@@ -164,10 +174,12 @@ public class AppointmentService {
 			List<Appointment> allAppointments = appointmentRepository
 					.findByDateAndTimeAndStatusNot(date, null, "CANCELLED");
 
-			// Get all employees
-			List<Employee> allEmployees = employeeRepository.findAll();
+			// Get all users with employee_no (employees)
+			List<User> allEmployees = userRepository.findAll().stream()
+					.filter(u -> u.getEmployeeNo() != null && !u.getEmployeeNo().isEmpty())
+					.collect(Collectors.toList());
 			List<String> allTechnicianNames = allEmployees.stream()
-					.map(Employee::getName)
+					.map(User::getName)
 					.collect(Collectors.toList());
 
 			// For each time slot, find available technicians

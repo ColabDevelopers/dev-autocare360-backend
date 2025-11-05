@@ -63,11 +63,11 @@ public class Appointment {
 
     private String technician; // DEPRECATED: Keep for backward compatibility, use assignedEmployee instead
 
-    // NEW: Proper employee reference
+    // Employee reference (points to users table with employee_no)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     @JsonIgnore
-    private Employee assignedEmployee;
+    private User assignedEmployee;
 
     // NEW: Project tracking fields
     @Column(name = "estimated_hours", precision = 5, scale = 2)
@@ -205,11 +205,11 @@ public class Appointment {
     }
 
     // NEW: Getters and setters for Employee relationship
-    public Employee getAssignedEmployee() {
+    public User getAssignedEmployee() {
         return assignedEmployee;
     }
 
-    public void setAssignedEmployee(Employee assignedEmployee) {
+    public void setAssignedEmployee(User assignedEmployee) {
         this.assignedEmployee = assignedEmployee;
     }
 

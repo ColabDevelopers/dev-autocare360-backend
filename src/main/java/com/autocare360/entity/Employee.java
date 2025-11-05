@@ -53,9 +53,8 @@ public class Employee {
     @JsonIgnore
     private List<TimeLog> timeLogs;
 
-    @OneToMany(mappedBy = "assignedEmployee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Appointment> appointments;
+    // NOTE: Appointments now link directly to User entity (users with employee_no)
+    // Removed appointments relationship as assignedEmployee now references User instead of Employee
 
     // Constructors
     public Employee() {
@@ -151,13 +150,8 @@ public class Employee {
         this.timeLogs = timeLogs;
     }
 
-    public List<Appointment> getAppointments() {
-        return appointments;
-    }
-
-    public void setAppointments(List<Appointment> appointments) {
-        this.appointments = appointments;
-    }
+    // NOTE: getAppointments/setAppointments removed
+    // Appointments now link to User entity (users with employee_no) instead of Employee
 
     @PreUpdate
     public void preUpdate() {

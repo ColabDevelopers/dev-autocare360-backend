@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.autocare360.dto.AppointmentRequest;
 import com.autocare360.dto.AppointmentResponse;
-import com.autocare360.entity.Employee;
 import com.autocare360.entity.User;
-import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.UserRepository;
 import com.autocare360.security.JwtService;
 import com.autocare360.service.AppointmentService;
@@ -30,7 +28,6 @@ public class EmployeeAppointmentController {
     private final AppointmentService appointmentService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final EmployeeRepository employeeRepository;
 
     /**
      * Get appointments for the logged-in employee
@@ -66,7 +63,7 @@ public class EmployeeAppointmentController {
             ));
         }
 
-        // Get user to find their employee record
+        // Get user to verify they are an employee
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return ResponseEntity.status(404).body(java.util.Map.of(
@@ -75,19 +72,18 @@ public class EmployeeAppointmentController {
             ));
         }
 
-        // Find employee record by email
-        Employee employee = employeeRepository.findByEmail(user.getEmail());
-        if (employee == null) {
+        // Check if user has employee_no (employees only field)
+        if (user.getEmployeeNo() == null || user.getEmployeeNo().isEmpty()) {
             return ResponseEntity.status(404).body(java.util.Map.of(
                 "error", "Not Found",
-                "message", "Employee record not found for email: " + user.getEmail() + ". Please ensure an employee record exists in the employees table."
+                "message", "Employee number not found for user: " + user.getEmail() + ". Please ensure the user has an employee_no assigned in the users table."
             ));
         }
 
-        // Get only CONFIRMED and IN_PROGRESS appointments for this employee
+        // Get only CONFIRMED and IN_PROGRESS appointments for this employee (user)
         List<String> allowedStatuses = Arrays.asList("CONFIRMED", "IN_PROGRESS");
         List<AppointmentResponse> appointments = appointmentService.listByEmployeeAndStatus(
-            employee.getId(), 
+            user.getId(), 
             allowedStatuses
         );
 
