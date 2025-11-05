@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -38,14 +38,19 @@ jobs:
         password: ${{ secrets.PAT_TOKEN }}
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: true
         tags: ghcr.io/${{ env.REPO_NAME }}:latest
 
+    - name: Create kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+
     - name: Deploy to Kubernetes
-      uses: azure/k8s-deploy@v4
+      uses: azure/k8s-deploy@v5
       with:
         manifests: |
           deployment/kubernetes/base/namespace.yaml
@@ -62,8 +67,7 @@ jobs:
           deployment/kubernetes/RBAC/rolebinding.yaml
         images: ghcr.io/${{ github.repository }}:latest
         namespace: autocare360
-      env:
-        KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
+
     - name: Create Secrets
       run: |
         kubectl create secret generic autocare360-secrets --from-literal=db-url=${{ secrets.DB_URL }} --from-literal=jwt-secret=${{ secrets.JWT_SECRET }} --from-literal=mysql-root-password=${{ secrets.MYSQL_ROOT_PASSWORD }} --from-literal=mysql-database=${{ secrets.MYSQL_DATABASE }} --from-literal=mysql-user=${{ secrets.MYSQL_USER }} --from-literal=mysql-password=${{ secrets.MYSQL_PASSWORD }} -n autocare360 --dry-run=client -o yaml | kubectl apply -f -
