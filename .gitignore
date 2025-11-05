@@ -40,3 +40,4 @@ build/
 
 # Sensitive configuration files with credentials
 flyway.properties
+kubeconfig.yaml
