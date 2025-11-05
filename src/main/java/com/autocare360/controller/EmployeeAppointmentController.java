@@ -5,10 +5,13 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.autocare360.dto.AppointmentRequest;
 import com.autocare360.dto.AppointmentResponse;
 import com.autocare360.entity.Employee;
 import com.autocare360.entity.User;
@@ -90,4 +93,53 @@ public class EmployeeAppointmentController {
 
         return ResponseEntity.ok(appointments);
     }
+
+    /**
+     * Start service for an appointment (update status to IN_PROGRESS)
+     * Only allows updating CONFIRMED appointments to IN_PROGRESS
+     */
+    @PutMapping("/{id}/start")
+    public ResponseEntity<?> startService(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(java.util.Map.of(
+                "error", "Unauthorized",
+                "message", "No authorization header provided"
+            ));
+        }
+
+        String token = authorization.substring(7);
+        if (!jwtService.isTokenValid(token)) {
+            return ResponseEntity.status(401).body(java.util.Map.of(
+                "error", "Unauthorized",
+                "message", "Invalid or expired token"
+            ));
+        }
+
+        // Verify user has EMPLOYEE role
+        boolean isEmployee = jwtService.hasRole(authorization, "EMPLOYEE");
+        if (!isEmployee) {
+            return ResponseEntity.status(403).body(java.util.Map.of(
+                "error", "Forbidden",
+                "message", "Access denied. Employee role required."
+            ));
+        }
+
+        try {
+            // Create request to update status to IN_PROGRESS
+            AppointmentRequest request = new AppointmentRequest();
+            request.setStatus("IN_PROGRESS");
+            
+            AppointmentResponse response = appointmentService.update(id, request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(java.util.Map.of(
+                "error", "Bad Request",
+                "message", "Failed to start service: " + e.getMessage()
+            ));
+        }
+    }
 }
+
