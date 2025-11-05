@@ -18,39 +18,39 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminEmployeeController {
 
-	private final EmployeeService employeeService;
+  private final EmployeeService employeeService;
 
-	@PostMapping
-	public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody CreateEmployeeRequest request) {
-		EmployeeResponse resp = employeeService.create(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(resp);
-	}
+  @PostMapping
+  public ResponseEntity<EmployeeResponse> create(
+      @Valid @RequestBody CreateEmployeeRequest request) {
+    EmployeeResponse resp = employeeService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+  }
 
-	@GetMapping
-	public List<EmployeeResponse> list() {
-		return employeeService.list();
-	}
+  @GetMapping
+  public List<EmployeeResponse> list() {
+    return employeeService.list();
+  }
 
-	@GetMapping("/{id}")
-	public EmployeeResponse get(@PathVariable Long id) {
-		return employeeService.get(id);
-	}
+  @GetMapping("/{id}")
+  public EmployeeResponse get(@PathVariable Long id) {
+    return employeeService.get(id);
+  }
 
-	@PutMapping("/{id}")
-	public EmployeeResponse update(@PathVariable Long id, @Valid @RequestBody UpdateEmployeeRequest request) {
-		return employeeService.update(id, request);
-	}
+  @PutMapping("/{id}")
+  public EmployeeResponse update(
+      @PathVariable Long id, @Valid @RequestBody UpdateEmployeeRequest request) {
+    return employeeService.update(id, request);
+  }
 
-	@PostMapping("/{id}/reset-password")
-	public EmployeeResponse resetPassword(@PathVariable Long id) {
-		return employeeService.resetPassword(id);
-	}
+  @PostMapping("/{id}/reset-password")
+  public EmployeeResponse resetPassword(@PathVariable Long id) {
+    return employeeService.resetPassword(id);
+  }
 
-	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		employeeService.delete(id);
-		return ResponseEntity.noContent().build();
-	}
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable Long id) {
+    employeeService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
 }
-
-

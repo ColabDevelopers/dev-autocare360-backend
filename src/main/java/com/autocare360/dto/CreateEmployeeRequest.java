@@ -8,15 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateEmployeeRequest {
-	@NotBlank
-	private String name;
+  @NotBlank private String name;
 
-	@Email
-	@NotBlank
-	private String email;
+  @Email @NotBlank private String email;
 
-	@NotBlank
-	private String department;
+  @NotBlank private String department;
 }
-
-

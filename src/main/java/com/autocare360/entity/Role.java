@@ -20,12 +20,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class Role {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
 
-	@Column(nullable = false, unique = true, length = 50)
-	private String name; // ADMIN, EMPLOYEE, CUSTOMER
+  @Column(nullable = false, unique = true, length = 50)
+  private String name; // ADMIN, EMPLOYEE, CUSTOMER
 }
-
-

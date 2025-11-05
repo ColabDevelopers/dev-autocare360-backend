@@ -22,39 +22,47 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-	private final JwtService jwtService;
-	private final UserRepository userRepository;
+  private final JwtService jwtService;
+  private final UserRepository userRepository;
 
-	@Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
-			throws ServletException, IOException {
-		String header = request.getHeader("Authorization");
-		if (header != null && header.startsWith("Bearer ")) {
-			String token = header.substring(7);
-			log.debug("Processing JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
-			
-			if (jwtService.isTokenValid(token)) {
-				String subject = jwtService.extractSubject(token);
-				log.debug("JWT token valid, subject (user ID): {}", subject);
-				
-				userRepository.findById(Long.valueOf(subject)).ifPresent(user -> {
-					log.debug("User found: {} ({})", user.getEmail(), user.getId());
-					List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-							.map(r -> new SimpleGrantedAuthority("ROLE_" + r.getName()))
-							.collect(Collectors.toList());
-					log.debug("Authorities: {}", authorities);
-					
-					SecurityContextHolder.getContext().setAuthentication(
-							new UsernamePasswordAuthenticationToken(user.getEmail(), null, authorities)
-					);
-					log.debug("Authentication set for user: {}", user.getEmail());
-				});
-			} else {
-				log.warn("Invalid JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
-			}
-		}
-		filterChain.doFilter(request, response);
-	}
+  @Override
+  protected void doFilterInternal(
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
+      throws ServletException, IOException {
+    String header = request.getHeader("Authorization");
+    if (header != null && header.startsWith("Bearer ")) {
+      String token = header.substring(7);
+      log.debug(
+          "Processing JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
+
+      if (jwtService.isTokenValid(token)) {
+        String subject = jwtService.extractSubject(token);
+        log.debug("JWT token valid, subject (user ID): {}", subject);
+
+        userRepository
+            .findById(Long.valueOf(subject))
+            .ifPresent(
+                user -> {
+                  log.debug("User found: {} ({})", user.getEmail(), user.getId());
+                  List<SimpleGrantedAuthority> authorities =
+                      user.getRoles().stream()
+                          .map(r -> new SimpleGrantedAuthority("ROLE_" + r.getName()))
+                          .collect(Collectors.toList());
+                  log.debug("Authorities: {}", authorities);
+
+                  SecurityContextHolder.getContext()
+                      .setAuthentication(
+                          new UsernamePasswordAuthenticationToken(
+                              user.getEmail(), null, authorities));
+                  log.debug("Authentication set for user: {}", user.getEmail());
+                });
+      } else {
+        log.warn(
+            "Invalid JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
+      }
+    }
+    filterChain.doFilter(request, response);
+  }
 }
-
-

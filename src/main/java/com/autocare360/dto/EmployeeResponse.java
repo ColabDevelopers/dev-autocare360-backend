@@ -14,14 +14,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class EmployeeResponse {
-	private Long id;
-	private String email;
-	private String name;
-	private String employeeNo;
-	private String department;
-	private String status;
-	private List<String> roles;
-	private Instant createdAt;
+  private Long id;
+  private String email;
+  private String name;
+  private String employeeNo;
+  private String department;
+  private String status;
+  private List<String> roles;
+  private Instant createdAt;
 }
-
-

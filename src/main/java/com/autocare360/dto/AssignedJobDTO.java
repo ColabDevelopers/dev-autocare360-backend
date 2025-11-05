@@ -5,142 +5,142 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class AssignedJobDTO {
-    private Long id;
-    private String type;
-    private String customer;
-    private Long customerId;
-    private String vehicle;
-    private Integer progress;
-    private String status;
-    private BigDecimal estimatedHours;
-    private BigDecimal loggedHours;
-    private LocalDate dueDate;
-    private LocalDate appointmentDate;
-    private String appointmentTime;
-    private Long appointmentId;
-    private String description;
-    private LocalDateTime updatedAt;
+  private Long id;
+  private String type;
+  private String customer;
+  private Long customerId;
+  private String vehicle;
+  private Integer progress;
+  private String status;
+  private BigDecimal estimatedHours;
+  private BigDecimal loggedHours;
+  private LocalDate dueDate;
+  private LocalDate appointmentDate;
+  private String appointmentTime;
+  private Long appointmentId;
+  private String description;
+  private LocalDateTime updatedAt;
 
-    public AssignedJobDTO() {}
+  public AssignedJobDTO() {}
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+  // Getters and Setters
+  public Long getId() {
+    return id;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public String getType() {
-        return type;
-    }
+  public String getType() {
+    return type;
+  }
 
-    public void setType(String type) {
-        this.type = type;
-    }
+  public void setType(String type) {
+    this.type = type;
+  }
 
-    public String getCustomer() {
-        return customer;
-    }
+  public String getCustomer() {
+    return customer;
+  }
 
-    public void setCustomer(String customer) {
-        this.customer = customer;
-    }
+  public void setCustomer(String customer) {
+    this.customer = customer;
+  }
 
-    public Long getCustomerId() {
-        return customerId;
-    }
+  public Long getCustomerId() {
+    return customerId;
+  }
 
-    public void setCustomerId(Long customerId) {
-        this.customerId = customerId;
-    }
+  public void setCustomerId(Long customerId) {
+    this.customerId = customerId;
+  }
 
-    public String getVehicle() {
-        return vehicle;
-    }
+  public String getVehicle() {
+    return vehicle;
+  }
 
-    public void setVehicle(String vehicle) {
-        this.vehicle = vehicle;
-    }
+  public void setVehicle(String vehicle) {
+    this.vehicle = vehicle;
+  }
 
-    public Integer getProgress() {
-        return progress;
-    }
+  public Integer getProgress() {
+    return progress;
+  }
 
-    public void setProgress(Integer progress) {
-        this.progress = progress;
-    }
+  public void setProgress(Integer progress) {
+    this.progress = progress;
+  }
 
-    public String getStatus() {
-        return status;
-    }
+  public String getStatus() {
+    return status;
+  }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
-    public BigDecimal getEstimatedHours() {
-        return estimatedHours;
-    }
+  public BigDecimal getEstimatedHours() {
+    return estimatedHours;
+  }
 
-    public void setEstimatedHours(BigDecimal estimatedHours) {
-        this.estimatedHours = estimatedHours;
-    }
+  public void setEstimatedHours(BigDecimal estimatedHours) {
+    this.estimatedHours = estimatedHours;
+  }
 
-    public BigDecimal getLoggedHours() {
-        return loggedHours;
-    }
+  public BigDecimal getLoggedHours() {
+    return loggedHours;
+  }
 
-    public void setLoggedHours(BigDecimal loggedHours) {
-        this.loggedHours = loggedHours;
-    }
+  public void setLoggedHours(BigDecimal loggedHours) {
+    this.loggedHours = loggedHours;
+  }
 
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
+  public LocalDate getDueDate() {
+    return dueDate;
+  }
 
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
+  public void setDueDate(LocalDate dueDate) {
+    this.dueDate = dueDate;
+  }
 
-    public LocalDate getAppointmentDate() {
-        return appointmentDate;
-    }
+  public LocalDate getAppointmentDate() {
+    return appointmentDate;
+  }
 
-    public void setAppointmentDate(LocalDate appointmentDate) {
-        this.appointmentDate = appointmentDate;
-    }
+  public void setAppointmentDate(LocalDate appointmentDate) {
+    this.appointmentDate = appointmentDate;
+  }
 
-    public String getAppointmentTime() {
-        return appointmentTime;
-    }
+  public String getAppointmentTime() {
+    return appointmentTime;
+  }
 
-    public void setAppointmentTime(String appointmentTime) {
-        this.appointmentTime = appointmentTime;
-    }
+  public void setAppointmentTime(String appointmentTime) {
+    this.appointmentTime = appointmentTime;
+  }
 
-    public Long getAppointmentId() {
-        return appointmentId;
-    }
+  public Long getAppointmentId() {
+    return appointmentId;
+  }
 
-    public void setAppointmentId(Long appointmentId) {
-        this.appointmentId = appointmentId;
-    }
+  public void setAppointmentId(Long appointmentId) {
+    this.appointmentId = appointmentId;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
+  }
 }

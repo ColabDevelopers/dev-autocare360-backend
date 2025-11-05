@@ -1,42 +1,40 @@
 package com.autocare360.repo;
 
+import com.autocare360.entity.Appointment;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.autocare360.entity.Appointment;
-
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-    List<Appointment> findByStatusOrderByDateAscTimeAsc(String status);
+  List<Appointment> findByStatusOrderByDateAscTimeAsc(String status);
 
-    // Employee Dashboard Queries - Find by employee and status
-    List<Appointment> findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
-            Long employeeId, List<String> statuses);
+  // Employee Dashboard Queries - Find by employee and status
+  List<Appointment> findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
+      Long employeeId, List<String> statuses);
 
-    List<Appointment> findByAssignedEmployee_IdAndStatusOrderByDateAscTimeAsc(
-            Long employeeId, String status);
+  List<Appointment> findByAssignedEmployee_IdAndStatusOrderByDateAscTimeAsc(
+      Long employeeId, String status);
 
-    List<Appointment> findByAssignedEmployee_IdOrderByDateAscTimeAsc(Long employeeId);
+  List<Appointment> findByAssignedEmployee_IdOrderByDateAscTimeAsc(Long employeeId);
 
-    // Employee Dashboard Queries - Find by employee and date
-    List<Appointment> findByAssignedEmployee_IdAndDateOrderByTimeAsc(
-            Long employeeId, LocalDate date);
+  // Employee Dashboard Queries - Find by employee and date
+  List<Appointment> findByAssignedEmployee_IdAndDateOrderByTimeAsc(Long employeeId, LocalDate date);
 
-    List<Appointment> findByAssignedEmployee_IdAndDateBetween(
-            Long employeeId, LocalDate startDate, LocalDate endDate);
+  List<Appointment> findByAssignedEmployee_IdAndDateBetween(
+      Long employeeId, LocalDate startDate, LocalDate endDate);
 
-    // Employee Dashboard Queries - Count completed by employee in date range
-    @Query("SELECT COUNT(a) FROM Appointment a WHERE a.assignedEmployee.id = :employeeId " +
-            "AND a.status = :status AND a.updatedAt BETWEEN :start AND :end")
-    Integer countByAssignedEmployeeIdAndStatusAndUpdatedAtBetween(
-            @Param("employeeId") Long employeeId,
-            @Param("status") String status,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end);
+  // Employee Dashboard Queries - Count completed by employee in date range
+  @Query(
+      "SELECT COUNT(a) FROM Appointment a WHERE a.assignedEmployee.id = :employeeId "
+          + "AND a.status = :status AND a.updatedAt BETWEEN :start AND :end")
+  Integer countByAssignedEmployeeIdAndStatusAndUpdatedAtBetween(
+      @Param("employeeId") Long employeeId,
+      @Param("status") String status,
+      @Param("start") LocalDateTime start,
+      @Param("end") LocalDateTime end);
 }

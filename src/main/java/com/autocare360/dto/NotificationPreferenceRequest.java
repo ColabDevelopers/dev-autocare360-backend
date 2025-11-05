@@ -11,9 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class NotificationPreferenceRequest {
 
-    private Boolean emailNotifications;
-    private Boolean pushNotifications;
-    private Boolean serviceUpdates;
-    private Boolean appointmentReminders;
+  private Boolean emailNotifications;
+  private Boolean pushNotifications;
+  private Boolean serviceUpdates;
+  private Boolean appointmentReminders;
 }
-

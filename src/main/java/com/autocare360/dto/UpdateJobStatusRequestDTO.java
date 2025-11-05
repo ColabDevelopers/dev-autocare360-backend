@@ -6,39 +6,39 @@ import jakarta.validation.constraints.NotNull;
 
 public class UpdateJobStatusRequestDTO {
 
-    @NotNull(message = "Status is required")
-    private String status;
+  @NotNull(message = "Status is required")
+  private String status;
 
-    @Min(0)
-    @Max(100)
-    private Integer progress;
+  @Min(0)
+  @Max(100)
+  private Integer progress;
 
-    private String notes;
+  private String notes;
 
-    public UpdateJobStatusRequestDTO() {}
+  public UpdateJobStatusRequestDTO() {}
 
-    // Getters and Setters
-    public String getStatus() {
-        return status;
-    }
+  // Getters and Setters
+  public String getStatus() {
+    return status;
+  }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
-    public Integer getProgress() {
-        return progress;
-    }
+  public Integer getProgress() {
+    return progress;
+  }
 
-    public void setProgress(Integer progress) {
-        this.progress = progress;
-    }
+  public void setProgress(Integer progress) {
+    this.progress = progress;
+  }
 
-    public String getNotes() {
-        return notes;
-    }
+  public String getNotes() {
+    return notes;
+  }
 
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
+  public void setNotes(String notes) {
+    this.notes = notes;
+  }
 }

@@ -1,93 +1,164 @@
 package com.autocare360.entity;
-import java.time.LocalDateTime;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column; import jakarta.persistence.Entity; import jakarta.persistence.FetchType; import jakarta.persistence.GeneratedValue; import jakarta.persistence.GenerationType; import jakarta.persistence.Id; import jakarta.persistence.JoinColumn; import jakarta.persistence.ManyToOne; import jakarta.persistence.PreUpdate; import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
-@Entity @Table(name = "vehicles")
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "vehicles")
 public class Vehicle {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  @JsonIgnore
+  private User user;
 
-    @Column(length = 20)
-    private String vin;
+  @Column(length = 20)
+  private String vin;
 
-    @NotNull
-    @Column(nullable = false)
-    private String make;
+  @NotNull
+  @Column(nullable = false)
+  private String make;
 
-    @NotNull
-    @Column(nullable = false)
-    private String model;
+  @NotNull
+  @Column(nullable = false)
+  private String model;
 
-    private Integer year;
+  private Integer year;
 
-    @Column(name = "plate_number")
-    private String plateNumber;
+  @Column(name = "plate_number")
+  private String plateNumber;
 
-    private String color;
+  private String color;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+  @Column(name = "created_at")
+  private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
 
-    @Column(name = "meta", length = 2000)
-    private String meta; // JSON blob for extra data
+  @Column(name = "meta", length = 2000)
+  private String meta; // JSON blob for extra data
 
-    public Vehicle() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
+  public Vehicle() {
+    this.createdAt = LocalDateTime.now();
+    this.updatedAt = LocalDateTime.now();
+  }
 
-    // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  // Getters and setters
+  public Long getId() {
+    return id;
+  }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public Long getUserId() { return user != null ? user.getId() : null; }
-    public void setUserId(Long userId) {
-        if (this.user == null) this.user = new User();
-        this.user.setId(userId);
-    }
+  public User getUser() {
+    return user;
+  }
 
-    public String getVin() { return vin; }
-    public void setVin(String vin) { this.vin = vin; }
+  public void setUser(User user) {
+    this.user = user;
+  }
 
-    public String getMake() { return make; }
-    public void setMake(String make) { this.make = make; }
+  public Long getUserId() {
+    return user != null ? user.getId() : null;
+  }
 
-    public String getModel() { return model; }
-    public void setModel(String model) { this.model = model; }
+  public void setUserId(Long userId) {
+    if (this.user == null) this.user = new User();
+    this.user.setId(userId);
+  }
 
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
+  public String getVin() {
+    return vin;
+  }
 
-    public String getPlateNumber() { return plateNumber; }
-    public void setPlateNumber(String plateNumber) { this.plateNumber = plateNumber; }
+  public void setVin(String vin) {
+    this.vin = vin;
+  }
 
-    public String getColor() { return color; }
-    public void setColor(String color) { this.color = color; }
+  public String getMake() {
+    return make;
+  }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+  public void setMake(String make) {
+    this.make = make;
+  }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+  public String getModel() {
+    return model;
+  }
 
-    public String getMeta() { return meta; }
-    public void setMeta(String meta) { this.meta = meta; }
+  public void setModel(String model) {
+    this.model = model;
+  }
 
-    @PreUpdate
-    public void preUpdate() { this.updatedAt = LocalDateTime.now(); }
+  public Integer getYear() {
+    return year;
+  }
+
+  public void setYear(Integer year) {
+    this.year = year;
+  }
+
+  public String getPlateNumber() {
+    return plateNumber;
+  }
+
+  public void setPlateNumber(String plateNumber) {
+    this.plateNumber = plateNumber;
+  }
+
+  public String getColor() {
+    return color;
+  }
+
+  public void setColor(String color) {
+    this.color = color;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
+  }
+
+  public String getMeta() {
+    return meta;
+  }
+
+  public void setMeta(String meta) {
+    this.meta = meta;
+  }
+
+  @PreUpdate
+  public void preUpdate() {
+    this.updatedAt = LocalDateTime.now();
+  }
 }

@@ -11,13 +11,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AppointmentNotification {
 
-    private Long appointmentId;
-    private String appointmentDate;
-    private String appointmentTime;
-    private String serviceType;
-    private String vehicleNumber;
-    private String status;
-    private String message;
-    private Long customerId;
+  private Long appointmentId;
+  private String appointmentDate;
+  private String appointmentTime;
+  private String serviceType;
+  private String vehicleNumber;
+  private String status;
+  private String message;
+  private Long customerId;
 }
-

@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SendMessageRequest {
-    private Long receiverId;
-    private String message;
+  private Long receiverId;
+  private String message;
 }
