@@ -447,17 +447,20 @@ public class EmployeeDashboardController {
       // Create and save notification for customer
       String notificationTitle = "Service Update";
       String notificationMessage = createNotificationMessage(updated, request);
-      
-      Notification notification = Notification.builder()
-          .userId(updated.getUserId())
-          .type("SERVICE_UPDATE")
-          .title(notificationTitle)
-          .message(notificationMessage)
-          .data(String.format("{\"serviceId\":%d,\"status\":\"%s\",\"progress\":%d}", 
-              updated.getId(), updated.getStatus(), updated.getProgress()))
-          .isRead(false)
-          .build();
-      
+
+      Notification notification =
+          Notification.builder()
+              .userId(updated.getUserId())
+              .type("SERVICE_UPDATE")
+              .title(notificationTitle)
+              .message(notificationMessage)
+              .data(
+                  String.format(
+                      "{\"serviceId\":%d,\"status\":\"%s\",\"progress\":%d}",
+                      updated.getId(), updated.getStatus(), updated.getProgress()))
+              .isRead(false)
+              .build();
+
       notificationRepository.save(notification);
       logger.info("💾 Notification saved for customer ID: {}", updated.getUserId());
 
@@ -465,7 +468,7 @@ public class EmployeeDashboardController {
       Map<String, Object> progressUpdate = new HashMap<>();
       progressUpdate.put("type", "service_update");
       progressUpdate.put("timestamp", LocalDateTime.now().toString());
-      
+
       Map<String, Object> updateData = new HashMap<>();
       updateData.put("serviceId", updated.getId());
       updateData.put("status", updated.getStatus());
@@ -475,11 +478,12 @@ public class EmployeeDashboardController {
       updateData.put("customerId", updated.getUserId());
       updateData.put("notificationTitle", notificationTitle);
       updateData.put("notificationMessage", notificationMessage);
-      
+
       progressUpdate.put("data", updateData);
-      
+
       // Broadcast to WebSocket topic
-      logger.info("📡 Broadcasting service update to /topic/service-updates: serviceId={}, progress={}%", 
+      logger.info(
+          "📡 Broadcasting service update to /topic/service-updates: serviceId={}, progress={}%",
           updated.getId(), updated.getProgress());
       messagingTemplate.convertAndSend("/topic/service-updates", progressUpdate);
       logger.info("✅ WebSocket message sent successfully");
@@ -555,13 +559,15 @@ public class EmployeeDashboardController {
   }
 
   // Helper method to create notification message
-  private String createNotificationMessage(Appointment appointment, UpdateJobStatusRequestDTO request) {
+  private String createNotificationMessage(
+      Appointment appointment, UpdateJobStatusRequestDTO request) {
     StringBuilder message = new StringBuilder();
-    
+
     // Service and vehicle info
-    message.append(String.format("Your %s service for %s", 
-        appointment.getService(), appointment.getVehicle()));
-    
+    message.append(
+        String.format(
+            "Your %s service for %s", appointment.getService(), appointment.getVehicle()));
+
     // Status change message
     if (request.getStatus() != null) {
       String statusMsg = "";
@@ -583,16 +589,16 @@ public class EmployeeDashboardController {
       }
       message.append(statusMsg);
     }
-    
+
     // Progress update message
     if (request.getProgress() != null && request.getStatus() == null) {
       message.append(String.format(" - Progress updated to %d%%", request.getProgress()));
     } else if (request.getProgress() != null) {
       message.append(String.format(" (%d%% complete)", request.getProgress()));
     }
-    
+
     message.append(".");
-    
+
     return message.toString();
   }
 }

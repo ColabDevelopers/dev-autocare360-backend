@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autocare360-backend
+  namespace: autocare360
+spec:
+  template:
+    spec:
+      containers:
+      - name: autocare360-backend
+        imagePullPolicy: Never
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autocare360-config
+  namespace: autocare360
+data:
+  SPRING_PROFILES_ACTIVE: "dev"
