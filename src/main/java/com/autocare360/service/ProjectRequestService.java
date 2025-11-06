@@ -49,7 +49,7 @@ public class ProjectRequestService {
     }
     
     public List<ProjectRequestResponseDTO> getProjectRequestsByCustomer(Long customerId) {
-        return projectRequestRepository.findByCustomerIdOrderByCreatedAtDesc(customerId)
+        return projectRequestRepository.findByCustomer_IdOrderByCreatedAtDesc(customerId)
                 .stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
@@ -57,7 +57,7 @@ public class ProjectRequestService {
     
     public Page<ProjectRequestResponseDTO> getProjectRequestsByCustomerPaginated(Long customerId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return projectRequestRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable)
+        return projectRequestRepository.findByCustomer_IdOrderByCreatedAtDesc(customerId, pageable)
                 .map(this::mapToResponseDTO);
     }
     
@@ -69,7 +69,7 @@ public class ProjectRequestService {
     }
     
     public List<ProjectRequestResponseDTO> getProjectRequestsByEmployee(Long employeeId) {
-        return projectRequestRepository.findByAssignedEmployeeIdOrderByCreatedAtDesc(employeeId)
+        return projectRequestRepository.findByAssignedEmployee_IdOrderByCreatedAtDesc(employeeId)
                 .stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
@@ -224,7 +224,7 @@ public class ProjectRequestService {
     }
     
     public Long getProjectRequestCountByCustomer(Long customerId) {
-        return projectRequestRepository.countByCustomerId(customerId);
+        return projectRequestRepository.countByCustomer_Id(customerId);
     }
     
     public List<ProjectRequestResponseDTO> getPendingProjectsOlderThanDays(int days) {

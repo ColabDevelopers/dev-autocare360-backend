@@ -15,7 +15,7 @@ import java.util.List;
 public interface ProjectRequestRepository extends JpaRepository<ProjectRequest, Long> {
     
     // Find by customer
-    List<ProjectRequest> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
+    List<ProjectRequest> findByCustomer_IdOrderByCreatedAtDesc(Long customerId);
     
     // Find by status
     List<ProjectRequest> findByStatusOrderByCreatedAtDesc(String status);
@@ -24,7 +24,7 @@ public interface ProjectRequestRepository extends JpaRepository<ProjectRequest, 
     List<ProjectRequest> findByProjectTypeOrderByCreatedAtDesc(String projectType);
     
     // Find by assigned employee
-    List<ProjectRequest> findByAssignedEmployeeIdOrderByCreatedAtDesc(Long employeeId);
+    List<ProjectRequest> findByAssignedEmployee_IdOrderByCreatedAtDesc(Long employeeId);
     
     // Find by priority
     List<ProjectRequest> findByPriorityOrderByCreatedAtDesc(String priority);
@@ -47,7 +47,7 @@ public interface ProjectRequestRepository extends JpaRepository<ProjectRequest, 
     List<ProjectRequest> searchByNameOrDescription(@Param("searchTerm") String searchTerm);
     
     // Get projects by customer with pagination
-    Page<ProjectRequest> findByCustomerIdOrderByCreatedAtDesc(Long customerId, Pageable pageable);
+    Page<ProjectRequest> findByCustomer_IdOrderByCreatedAtDesc(Long customerId, Pageable pageable);
     
     // Get projects by status with pagination
     Page<ProjectRequest> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
@@ -63,5 +63,5 @@ public interface ProjectRequestRepository extends JpaRepository<ProjectRequest, 
     Long countByStatus(String status);
     
     // Count projects by customer
-    Long countByCustomerId(Long customerId);
+    Long countByCustomer_Id(Long customerId);
 }

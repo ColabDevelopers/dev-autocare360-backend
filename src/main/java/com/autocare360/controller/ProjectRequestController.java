@@ -21,25 +21,36 @@ import java.util.Optional;
 @RequestMapping("/api/project-requests")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = {"http://localhost:3000", "https://autocare360.vercel.app"})
 public class ProjectRequestController {
     
     private final ProjectRequestService projectRequestService;
     private final JwtService jwtService;
     
     private Long getUserIdFromAuth(String authorizationHeader) {
+        log.debug("🔍 getUserIdFromAuth called with header: {}", authorizationHeader != null ? "Present" : "Null");
+        
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            log.debug("❌ Invalid authorization header format");
             return null;
         }
         
         String token = authorizationHeader.substring(7);
+        log.debug("🎫 Token extracted (length: {})", token.length());
+        
         if (!jwtService.isTokenValid(token)) {
+            log.debug("❌ Token is invalid");
             return null;
         }
         
         try {
             String subject = jwtService.extractSubject(token);
-            return Long.parseLong(subject);
+            log.debug("✅ Subject extracted: {}", subject);
+            Long userId = Long.parseLong(subject);
+            log.debug("✅ User ID parsed: {}", userId);
+            return userId;
         } catch (NumberFormatException e) {
+            log.error("❌ Failed to parse user ID from token subject", e);
             return null;
         }
     }
@@ -126,6 +137,56 @@ public class ProjectRequestController {
         }
     }
     
+    @GetMapping("/my-requests")
+    public ResponseEntity<?> getMyProjectRequests(
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestHeader(value = "Authorization", required = false) String auth) {
+        
+        try {
+            Long userId = getUserIdFromAuth(auth);
+            
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Unauthorized access"));
+            }
+            
+            // Handle status filter
+            if (status != null && !status.trim().isEmpty()) {
+                List<ProjectRequestResponseDTO> results = projectRequestService.getProjectRequestsByStatus(status);
+                // Filter by customer
+                results = results.stream()
+                        .filter(pr -> pr.getCustomerId().equals(userId))
+                        .toList();
+                return ResponseEntity.ok(Map.of(
+                        "items", results,
+                        "total", results.size(),
+                        "page", 0,
+                        "size", results.size(),
+                        "totalPages", 1
+                ));
+            }
+            
+            // Paginated results for current customer
+            Page<ProjectRequestResponseDTO> pageResult = projectRequestService
+                    .getProjectRequestsByCustomerPaginated(userId, page, size);
+            
+            return ResponseEntity.ok(Map.of(
+                    "items", pageResult.getContent(),
+                    "total", pageResult.getTotalElements(),
+                    "page", pageResult.getNumber(),
+                    "size", pageResult.getSize(),
+                    "totalPages", pageResult.getTotalPages()
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error fetching customer project requests", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to fetch project requests"));
+        }
+    }
+    
     @GetMapping("/{id}")
     public ResponseEntity<?> getProjectRequestById(@PathVariable Long id,
                                                    @RequestHeader(value = "Authorization", required = false) String auth) {
@@ -163,33 +224,39 @@ public class ProjectRequestController {
     @PostMapping
     public ResponseEntity<?> createProjectRequest(@Valid @RequestBody ProjectRequestCreateDTO createDTO,
                                                   @RequestHeader(value = "Authorization", required = false) String auth) {
+        log.info("🚀 POST /api/project-requests called");
+        log.info("📝 Request body: {}", createDTO);
+        log.info("🔐 Authorization header present: {}", auth != null ? "Yes" : "No");
+        
         try {
             Long userId = getUserIdFromAuth(auth);
+            log.info("👤 User ID extracted: {}", userId);
             
             if (userId == null) {
+                log.warn("❌ No user ID found - returning unauthorized");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Unauthorized access"));
             }
-            
+
             // Set customer ID from JWT token
             createDTO.setCustomerId(userId);
+            log.info("✅ Customer ID set to: {}", userId);
             
             ProjectRequestResponseDTO createdRequest = projectRequestService.createProjectRequest(createDTO);
+            log.info("🎉 Project request created successfully: {}", createdRequest.getId());
             
             return ResponseEntity.status(HttpStatus.CREATED).body(createdRequest);
             
         } catch (RuntimeException e) {
-            log.error("Error creating project request", e);
+            log.error("💥 Runtime error creating project request", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("Unexpected error creating project request", e);
+            log.error("💥 Unexpected error creating project request", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to create project request"));
         }
-    }
-    
-    @PutMapping("/{id}")
+    }    @PutMapping("/{id}")
     public ResponseEntity<?> updateProjectRequest(@PathVariable Long id,
                                                   @RequestBody ProjectRequestUpdateDTO updateDTO,
                                                   @RequestHeader(value = "Authorization", required = false) String auth) {

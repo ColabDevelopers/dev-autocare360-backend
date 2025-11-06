@@ -37,6 +37,8 @@ public class SecurityConfig {
                     .permitAll() // Allow WebSocket connections and SockJS
                     .requestMatchers("/api/vehicles/**")
                     .hasAnyRole("ADMIN", "CUSTOMER")
+                    .requestMatchers("/api/project-requests/**")
+                    .hasAnyRole("ADMIN", "CUSTOMER")
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

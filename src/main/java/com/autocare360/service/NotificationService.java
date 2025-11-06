@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,7 @@ public class NotificationService {
     try {
       // Check user preferences
       NotificationPreference preference =
-          preferenceRepository.findByUserId(userId).orElse(createDefaultPreference(userId));
+          preferenceRepository.findByUserId(userId).orElse(createDefaultPreferenceSafely(userId));
 
       if (!shouldSendNotification(preference, type)) {
         log.info("Notification blocked by user preference: userId={}, type={}", userId, type);
@@ -219,11 +220,7 @@ public class NotificationService {
     NotificationPreference preference =
         preferenceRepository
             .findByUserId(userId)
-            .orElseGet(
-                () -> {
-                  log.info("No preferences found for user {}, creating default", userId);
-                  return createDefaultPreference(userId);
-                });
+            .orElseGet(() -> createDefaultPreferenceSafely(userId));
 
     log.info("Returning preferences for user {}: {}", userId, preference.getId());
     return mapPreferenceToResponse(preference);
@@ -237,11 +234,7 @@ public class NotificationService {
     NotificationPreference preference =
         preferenceRepository
             .findByUserId(userId)
-            .orElseGet(
-                () -> {
-                  log.info("No preferences found for user {}, creating default", userId);
-                  return createDefaultPreference(userId);
-                });
+            .orElseGet(() -> createDefaultPreferenceSafely(userId));
 
     if (request.getEmailNotifications() != null) {
       preference.setEmailNotifications(request.getEmailNotifications());
@@ -276,17 +269,37 @@ public class NotificationService {
     };
   }
 
-  private NotificationPreference createDefaultPreference(Long userId) {
-    NotificationPreference preference =
-        NotificationPreference.builder()
-            .userId(userId)
-            .emailNotifications(true)
-            .pushNotifications(true)
-            .serviceUpdates(true)
-            .appointmentReminders(true)
-            .build();
+  private NotificationPreference createDefaultPreferenceSafely(Long userId) {
+    log.info("Creating default notification preferences for user {}", userId);
+    try {
+      // Check one more time if preferences exist (race condition protection)
+      Optional<NotificationPreference> existing = preferenceRepository.findByUserId(userId);
+      if (existing.isPresent()) {
+        log.info("Preferences already exist for user {}, returning existing", userId);
+        return existing.get();
+      }
 
-    return preferenceRepository.save(preference);
+      NotificationPreference preference =
+          NotificationPreference.builder()
+              .userId(userId)
+              .emailNotifications(true)
+              .pushNotifications(true)
+              .serviceUpdates(true)
+              .appointmentReminders(true)
+              .build();
+
+      preference = preferenceRepository.save(preference);
+      log.info("Created default notification preferences for user {}", userId);
+      return preference;
+      
+    } catch (Exception e) {
+      // Handle constraint violation or any other database error
+      log.warn("Error creating default preferences for user {}, attempting to fetch existing: {}", userId, e.getMessage());
+      
+      // Try to fetch existing preferences one more time
+      return preferenceRepository.findByUserId(userId)
+          .orElseThrow(() -> new RuntimeException("Failed to create or retrieve notification preferences for user " + userId));
+    }
   }
 
   private NotificationResponse mapToResponse(Notification notification) {
