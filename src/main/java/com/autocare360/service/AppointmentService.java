@@ -14,7 +14,6 @@ import com.autocare360.dto.AppointmentRequest;
 import com.autocare360.dto.AppointmentResponse;
 import com.autocare360.dto.AvailabilityResponse;
 import com.autocare360.entity.Appointment;
-import com.autocare360.entity.Employee;
 import com.autocare360.entity.User;
 import com.autocare360.repo.AppointmentRepository;
 import com.autocare360.repo.EmployeeRepository;
@@ -203,9 +202,9 @@ public class AppointmentService {
 
 	private List<String> generateTimeSlots() {
 		List<String> slots = new ArrayList<>();
-		for (int hour = 9; hour < 17; hour++) {
+		// Generate slots from 00:00 to 23:00 (24 hours) with 1-hour gap
+		for (int hour = 0; hour < 24; hour++) {
 			slots.add(String.format("%02d:00", hour));
-			slots.add(String.format("%02d:30", hour));
 		}
 		return slots;
 	}
