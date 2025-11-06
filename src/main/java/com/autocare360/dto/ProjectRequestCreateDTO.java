@@ -4,8 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -30,6 +32,10 @@ public class ProjectRequestCreateDTO {
     private Integer estimatedDurationDays;
     
     private String attachments; // JSON string containing file URLs
+    
+    // Optional field to specify request date (defaults to current date if not provided)
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate requestedAt;
     
     // This will be set from JWT token in controller
     private Long customerId;

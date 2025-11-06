@@ -5,9 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "project_requests")
@@ -76,7 +78,8 @@ public class ProjectRequest {
     private Employee assignedEmployee;
     
     @Column(name = "requested_at")
-    private LocalDateTime requestedAt;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate requestedAt;
     
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
@@ -126,12 +129,21 @@ public class ProjectRequest {
         return assignedEmployee != null ? assignedEmployee.getName() : null;
     }
     
+    // Explicit getter/setter for requestedAt to ensure it works properly
+    public LocalDate getRequestedAt() {
+        return requestedAt;
+    }
+    
+    public void setRequestedAt(LocalDate requestedAt) {
+        this.requestedAt = requestedAt;
+    }
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (requestedAt == null) {
-            requestedAt = LocalDateTime.now();
+            requestedAt = LocalDate.now();
         }
         if (status == null) {
             status = "PENDING";

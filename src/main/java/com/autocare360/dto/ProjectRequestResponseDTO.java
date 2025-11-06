@@ -4,9 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -35,7 +37,8 @@ public class ProjectRequestResponseDTO {
     private String attachments;
     private Long assignedEmployeeId;
     private String assignedEmployeeName;
-    private LocalDateTime requestedAt;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate requestedAt;
     private LocalDateTime reviewedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

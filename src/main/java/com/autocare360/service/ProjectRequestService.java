@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -103,8 +104,13 @@ public class ProjectRequestService {
         projectRequest.setEstimatedCost(createDTO.getEstimatedCost());
         projectRequest.setEstimatedDurationDays(createDTO.getEstimatedDurationDays());
         projectRequest.setAttachments(createDTO.getAttachments());
+        // Set the request date (use provided date or current date)
+        LocalDate requestDate = createDTO.getRequestedAt() != null ? createDTO.getRequestedAt() : LocalDate.now();
+        projectRequest.setRequestedAt(requestDate);
+        log.info("Setting requestedAt to: {}", requestDate);
         
         ProjectRequest savedRequest = projectRequestRepository.save(projectRequest);
+        log.info("Saved project request - ID: {}, RequestedAt: {}", savedRequest.getId(), savedRequest.getRequestedAt());
         
         // Send notification to admins about new project request
         notificationService.notifyProjectRequest(
@@ -121,6 +127,10 @@ public class ProjectRequestService {
     
     @Transactional
     public Optional<ProjectRequestResponseDTO> updateProjectRequest(Long id, ProjectRequestUpdateDTO updateDTO) {
+        log.info("🔄 Updating project request with ID: {}", id);
+        log.info("📋 Update DTO received: {}", updateDTO);
+        log.info("🗓️ RequestedAt value in DTO: {}", updateDTO.getRequestedAt());
+        
         Optional<ProjectRequest> optionalProject = projectRequestRepository.findById(id);
         
         if (optionalProject.isEmpty()) {
@@ -189,8 +199,18 @@ public class ProjectRequestService {
             Optional<Employee> employee = employeeRepository.findById(updateDTO.getAssignedEmployeeId());
             employee.ifPresent(existing::setAssignedEmployee);
         }
+        if (updateDTO.getRequestedAt() != null) {
+            log.info("🗓️ Current requested date: {}", existing.getRequestedAt());
+            log.info("🗓️ New requested date from DTO: {}", updateDTO.getRequestedAt());
+            existing.setRequestedAt(updateDTO.getRequestedAt());
+            log.info("🗓️ After setting - requested date: {}", existing.getRequestedAt());
+        } else {
+            log.info("⚠️ RequestedAt is null in update DTO");
+        }
         
+        log.info("🔄 Before saving - requested date: {}", existing.getRequestedAt());
         ProjectRequest updated = projectRequestRepository.save(existing);
+        log.info("✅ After saving - requested date: {}", updated.getRequestedAt());
         
         // Send notification if status changed
         if (!oldStatus.equals(updated.getStatus())) {

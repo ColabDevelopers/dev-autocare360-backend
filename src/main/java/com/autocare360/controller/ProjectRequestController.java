@@ -289,6 +289,7 @@ public class ProjectRequestController {
                 customerUpdateDTO.setVehicleDetails(updateDTO.getVehicleDetails());
                 customerUpdateDTO.setDescription(updateDTO.getDescription());
                 customerUpdateDTO.setAttachments(updateDTO.getAttachments());
+                customerUpdateDTO.setRequestedAt(updateDTO.getRequestedAt()); // Allow customers to update request date
                 updateDTO = customerUpdateDTO;
             }
             

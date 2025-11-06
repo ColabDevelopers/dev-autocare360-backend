@@ -3,8 +3,10 @@ package com.autocare360.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -28,4 +30,8 @@ public class ProjectRequestUpdateDTO {
     private String rejectionReason;
     private String attachments;
     private Long assignedEmployeeId;
+    
+    // Request date field for updates
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate requestedAt;
 }
