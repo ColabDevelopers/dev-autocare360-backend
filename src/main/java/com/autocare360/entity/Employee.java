@@ -21,140 +21,146 @@ import jakarta.persistence.Table;
 @Table(name = "employees")
 public class Employee {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+  @Column(nullable = false, unique = true)
+  private String email;
 
-    @Column(name = "phone_number")
-    private String phoneNumber;
+  @Column(name = "phone_number")
+  private String phoneNumber;
 
-    @Column(nullable = false, length = 20)
-    private String status = "ACTIVE"; // ACTIVE, INACTIVE
+  @Column(nullable = false, length = 20)
+  private String status = "ACTIVE"; // ACTIVE, INACTIVE
 
-    private String specialization; // e.g., "Brake Systems", "Engine Repair", "General Mechanic"
+  private String specialization; // e.g., "Brake Systems", "Engine Repair", "General Mechanic"
 
-    @Column(name = "hire_date")
-    private LocalDate hireDate;
+  @Column(name = "hire_date")
+  private LocalDate hireDate;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+  @Column(name = "created_at")
+  private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
 
-    // Relationships
-    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<TimeLog> timeLogs;
+  // Relationships
+  @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @JsonIgnore
+  private List<TimeLog> timeLogs;
 
-    // NOTE: Appointments now link directly to User entity (users with employee_no)
-    // Removed appointments relationship as assignedEmployee now references User instead of Employee
+  @OneToMany(mappedBy = "assignedEmployee", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @JsonIgnore
+  private List<Appointment> appointments;
 
-    // Constructors
-    public Employee() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
+  // Constructors
+  public Employee() {
+    this.createdAt = LocalDateTime.now();
+    this.updatedAt = LocalDateTime.now();
+  }
 
-    public Employee(String name, String email, String phoneNumber) {
-        this();
-        this.name = name;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-    }
+  public Employee(String name, String email, String phoneNumber) {
+    this();
+    this.name = name;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+  }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+  // Getters and Setters
+  public Long getId() {
+    return id;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public String getEmail() {
-        return email;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
+  public String getPhoneNumber() {
+    return phoneNumber;
+  }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
+  public void setPhoneNumber(String phoneNumber) {
+    this.phoneNumber = phoneNumber;
+  }
 
-    public String getStatus() {
-        return status;
-    }
+  public String getStatus() {
+    return status;
+  }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
-    public String getSpecialization() {
-        return specialization;
-    }
+  public String getSpecialization() {
+    return specialization;
+  }
 
-    public void setSpecialization(String specialization) {
-        this.specialization = specialization;
-    }
+  public void setSpecialization(String specialization) {
+    this.specialization = specialization;
+  }
 
-    public LocalDate getHireDate() {
-        return hireDate;
-    }
+  public LocalDate getHireDate() {
+    return hireDate;
+  }
 
-    public void setHireDate(LocalDate hireDate) {
-        this.hireDate = hireDate;
-    }
+  public void setHireDate(LocalDate hireDate) {
+    this.hireDate = hireDate;
+  }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
+  }
 
-    public List<TimeLog> getTimeLogs() {
-        return timeLogs;
-    }
+  public List<TimeLog> getTimeLogs() {
+    return timeLogs;
+  }
 
-    public void setTimeLogs(List<TimeLog> timeLogs) {
-        this.timeLogs = timeLogs;
-    }
+  public void setTimeLogs(List<TimeLog> timeLogs) {
+    this.timeLogs = timeLogs;
+  }
 
-    // NOTE: getAppointments/setAppointments removed
-    // Appointments now link to User entity (users with employee_no) instead of Employee
+  public List<Appointment> getAppointments() {
+    return appointments;
+  }
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+  public void setAppointments(List<Appointment> appointments) {
+    this.appointments = appointments;
+  }
+
+  @PreUpdate
+  public void preUpdate() {
+    this.updatedAt = LocalDateTime.now();
+  }
 }

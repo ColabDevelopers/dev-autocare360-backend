@@ -14,46 +14,47 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CustomerService {
 
-	private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-	@Transactional(readOnly = true)
-	public List<UserResponse> listCustomers() {
-		return userRepository.findDistinctByRoles_Name("CUSTOMER").stream()
-				.map(this::toUserResponse)
-				.collect(Collectors.toList());
-	}
+  @Transactional(readOnly = true)
+  public List<UserResponse> listCustomers() {
+    return userRepository.findDistinctByRoles_Name("CUSTOMER").stream()
+        .map(this::toUserResponse)
+        .collect(Collectors.toList());
+  }
 
-	@Transactional(readOnly = true)
-	public UserResponse getCustomer(Long id) {
-		User u = userRepository.findById(id).orElseThrow();
-		return toUserResponse(u);
-	}
+  @Transactional(readOnly = true)
+  public UserResponse getCustomer(Long id) {
+    User u = userRepository.findById(id).orElseThrow();
+    return toUserResponse(u);
+  }
 
-	@Transactional
-	public UserResponse updateCustomer(Long id, String name, String phone, String status) {
-		User u = userRepository.findById(id).orElseThrow();
-		if (name != null) u.setName(name);
-		if (phone != null) u.setPhone(phone);
-		if (status != null) u.setStatus(status);
-		return toUserResponse(userRepository.save(u));
-	}
+  @Transactional
+  public UserResponse updateCustomer(Long id, String name, String phone, String status) {
+    User u = userRepository.findById(id).orElseThrow();
+    if (name != null) u.setName(name);
+    if (phone != null) u.setPhone(phone);
+    if (status != null) u.setStatus(status);
+    return toUserResponse(userRepository.save(u));
+  }
 
-	@Transactional
-	public void deleteCustomer(Long id) {
-		User u = userRepository.findById(id).orElseThrow();
-		userRepository.delete(u);
-	}
+  @Transactional
+  public void deleteCustomer(Long id) {
+    User u = userRepository.findById(id).orElseThrow();
+    userRepository.delete(u);
+  }
 
-	private UserResponse toUserResponse(User user) {
-		return UserResponse.builder()
-				.id(user.getId())
-				.email(user.getEmail())
-				.name(user.getName())
-				.roles(user.getRoles().stream().map(r -> r.getName().toLowerCase(Locale.ROOT)).collect(Collectors.toList()))
-				.status(user.getStatus())
-				.phone(user.getPhone())
-				.build();
-	}
+  private UserResponse toUserResponse(User user) {
+    return UserResponse.builder()
+        .id(user.getId())
+        .email(user.getEmail())
+        .name(user.getName())
+        .roles(
+            user.getRoles().stream()
+                .map(r -> r.getName().toLowerCase(Locale.ROOT))
+                .collect(Collectors.toList()))
+        .status(user.getStatus())
+        .phone(user.getPhone())
+        .build();
+  }
 }
-
-

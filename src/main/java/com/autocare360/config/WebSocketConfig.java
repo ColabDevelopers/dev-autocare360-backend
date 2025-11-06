@@ -13,36 +13,36 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final WebSocketAuthChannelInterceptor webSocketAuthChannelInterceptor;
+  private final WebSocketAuthChannelInterceptor webSocketAuthChannelInterceptor;
 
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Enable a simple in-memory message broker to carry messages back to the client
-        // on destinations prefixed with "/topic" (broadcast) and "/queue" (point-to-point)
-        config.enableSimpleBroker("/topic", "/queue");
+  @Override
+  public void configureMessageBroker(MessageBrokerRegistry config) {
+    // Enable a simple in-memory message broker to carry messages back to the client
+    // on destinations prefixed with "/topic" (broadcast) and "/queue" (point-to-point)
+    config.enableSimpleBroker("/topic", "/queue");
 
-        // Designates the "/app" prefix for messages bound for @MessageMapping-annotated methods
-        config.setApplicationDestinationPrefixes("/app");
+    // Designates the "/app" prefix for messages bound for @MessageMapping-annotated methods
+    config.setApplicationDestinationPrefixes("/app");
 
-        // Set user destination prefix for individual user messages
-        config.setUserDestinationPrefix("/user");
-    }
+    // Set user destination prefix for individual user messages
+    config.setUserDestinationPrefix("/user");
+  }
 
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Register the "/ws" endpoint, enabling SockJS fallback options
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins(
-                    "https://autocare360.vercel.app",
-                    "http://localhost:3000",
-                    "http://localhost:5173" // Vite default port
-                )
-                .withSockJS();
-    }
-    
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(webSocketAuthChannelInterceptor);
-    }
+  @Override
+  public void registerStompEndpoints(StompEndpointRegistry registry) {
+    // Register the "/ws" endpoint, enabling SockJS fallback options
+    registry
+        .addEndpoint("/ws")
+        .setAllowedOrigins(
+            "https://autocare360.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5173" // Vite default port
+            )
+        .withSockJS();
+  }
+
+  @Override
+  public void configureClientInboundChannel(ChannelRegistration registration) {
+    registration.interceptors(webSocketAuthChannelInterceptor);
+  }
 }
-

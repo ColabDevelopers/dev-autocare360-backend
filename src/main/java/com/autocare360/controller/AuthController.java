@@ -16,30 +16,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-	private final AuthService authService;
+  private final AuthService authService;
 
-	@PostMapping("/register")
-	public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
-		UserResponse resp = authService.register(request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(resp);
-	}
+  @PostMapping("/register")
+  public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+    UserResponse resp = authService.register(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+  }
 
-	@PostMapping("/login")
-	public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-		AuthResponse resp = authService.login(request);
-		return ResponseEntity.ok(resp);
-	}
+  @PostMapping("/login")
+  public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    AuthResponse resp = authService.login(request);
+    return ResponseEntity.ok(resp);
+  }
 
-	@PostMapping("/refresh")
-	public ResponseEntity<RefreshResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-		// Simple stateless: issue a new access token if needed in future (stubbed for now)
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-	}
+  @PostMapping("/refresh")
+  public ResponseEntity<RefreshResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+    // Simple stateless: issue a new access token if needed in future (stubbed for now)
+    return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+  }
 
-	@PostMapping("/logout")
-	public ResponseEntity<Void> logout() {
-		return ResponseEntity.noContent().build();
-	}
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout() {
+    return ResponseEntity.noContent().build();
+  }
 }
-
-

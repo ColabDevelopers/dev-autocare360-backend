@@ -7,14 +7,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UpdateEmployeeRequest {
-	@NotBlank
-	private String name;
+  @NotBlank private String name;
 
-	@NotBlank
-	private String department;
+  @NotBlank private String department;
 
-	@NotBlank
-	private String status; // ACTIVE / INACTIVE
+  @NotBlank private String status; // ACTIVE / INACTIVE
 }
-
-

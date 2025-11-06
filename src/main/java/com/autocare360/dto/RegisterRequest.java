@@ -9,28 +9,19 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RegisterRequest {
-	@NotBlank
-	private String name;
+  @NotBlank private String name;
 
-	@Email
-	@NotBlank
-	private String email;
+  @Email @NotBlank private String email;
 
-	@NotBlank
-	@Size(min = 6)
-	private String password;
+  @NotBlank
+  @Size(min = 6)
+  private String password;
 
-	@NotBlank
-	private String phone;
+  @NotBlank private String phone;
 
-	@NotBlank
-	private String vehicleMake;
+  @NotBlank private String vehicleMake;
 
-	@NotBlank
-	private String vehicleModel;
+  @NotBlank private String vehicleModel;
 
-	@NotBlank
-	private String vehicleYear;
+  @NotBlank private String vehicleYear;
 }
-
-

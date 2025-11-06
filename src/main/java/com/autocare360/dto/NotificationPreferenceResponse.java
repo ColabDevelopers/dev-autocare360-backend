@@ -11,11 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class NotificationPreferenceResponse {
 
-    private Long id;
-    private Long userId;
-    private Boolean emailNotifications;
-    private Boolean pushNotifications;
-    private Boolean serviceUpdates;
-    private Boolean appointmentReminders;
+  private Long id;
+  private Long userId;
+  private Boolean emailNotifications;
+  private Boolean pushNotifications;
+  private Boolean serviceUpdates;
+  private Boolean appointmentReminders;
 }
-

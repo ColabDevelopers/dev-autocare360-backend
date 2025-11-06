@@ -12,8 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class RefreshResponse {
-	private String accessToken;
-	private Integer expiresIn; // seconds
+  private String accessToken;
+  private Integer expiresIn; // seconds
 }
-
-

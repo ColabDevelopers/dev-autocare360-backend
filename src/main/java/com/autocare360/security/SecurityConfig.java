@@ -20,39 +20,40 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final JwtAuthFilter jwtAuthFilter;
-	private final CorsConfigurationSource corsConfigurationSource;
+  private final JwtAuthFilter jwtAuthFilter;
+  private final CorsConfigurationSource corsConfigurationSource;
 
-	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		return http
-				.csrf(csrf -> csrf.disable())
-				.cors(cors -> cors.configurationSource(corsConfigurationSource))
-				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(reg -> reg
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-						.requestMatchers("/employee/**").hasRole("EMPLOYEE") // Employee-only endpoints
-						.requestMatchers("/ws/**").permitAll() // Allow WebSocket connections
-						.requestMatchers("/api/vehicles/**").hasAnyRole("ADMIN", "CUSTOMER")
-						.requestMatchers("/api/employees/**").authenticated() // Allow authenticated users to view employees
-						.requestMatchers("/api/appointments/**").authenticated() // Allow authenticated users to manage appointments
-						.requestMatchers("/api/availability/**").authenticated() // Allow authenticated users to check availability
-						.anyRequest().authenticated()
-                )
-				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-				.build();
-	}
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http.csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource))
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            reg ->
+                reg.requestMatchers("/auth/**")
+                    .permitAll()
+                    .requestMatchers("/actuator/health", "/actuator/info")
+                    .permitAll()
+                    .requestMatchers("/admin/**")
+                    .hasRole("ADMIN")
+                    .requestMatchers("/ws/**")
+                    .permitAll() // Allow WebSocket connections and SockJS
+                    .requestMatchers("/api/vehicles/**")
+                    .hasAnyRole("ADMIN", "CUSTOMER")
+                    .anyRequest()
+                    .authenticated())
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+        .build();
+  }
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-		return configuration.getAuthenticationManager();
-	}
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+      throws Exception {
+    return configuration.getAuthenticationManager();
+  }
 }
-
-

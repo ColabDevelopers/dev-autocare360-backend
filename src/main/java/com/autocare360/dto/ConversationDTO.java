@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConversationDTO {
-    private Long userId;
-    private String name;
-    private String role;
-    private String lastMessage;
-    private String time;
-    private Long unreadCount;
-    private String avatar;
+  private Long userId;
+  private String name;
+  private String role;
+  private String lastMessage;
+  private String time;
+  private Long unreadCount;
+  private String avatar;
 }

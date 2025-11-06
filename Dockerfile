@@ -1,5 +1,5 @@
-# Build stage
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+# Stage 1: Build
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
 # Copy pom.xml and download dependencies
@@ -10,15 +10,21 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Runtime stage
+# Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Copy the built jar file
-COPY --from=build /app/target/autocare360-0.0.1-SNAPSHOT.jar app.jar
+# Create non-root user
+RUN addgroup --system spring && adduser --system spring --ingroup spring
+USER spring:spring
+
+# Copy JAR
+COPY --from=builder /app/target/*.jar app.jar
+
+# Optional: health check (without curl)
+HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # Expose port
 EXPOSE 8080
-
 # Run the application
 ENTRYPOINT ["java","-jar","app.jar"]
