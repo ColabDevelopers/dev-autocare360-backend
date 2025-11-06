@@ -23,22 +23,22 @@ spec:
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: mysql-root-password
+              key: MYSQL_ROOT_PASSWORD
         - name: MYSQL_DATABASE
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: mysql-database
+              key: MYSQL_DATABASE
         - name: MYSQL_USER
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: mysql-user
+              key: MYSQL_USER
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: mysql-password
+              key: MYSQL_PASSWORD
         volumeMounts:
         - name: mysql-storage
           mountPath: /var/lib/mysql

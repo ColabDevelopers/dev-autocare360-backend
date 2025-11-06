@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         app: autocare360-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
     spec:
       serviceAccountName: autocare360-sa
       securityContext:
@@ -27,22 +31,22 @@ spec:
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: db-url
+              key: DB_URL
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: jwt-secret
+              key: JWT_SECRET
         - name: MYSQL_USER
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: mysql-user
+              key: MYSQL_USER
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
               name: autocare360-secrets
-              key: mysql-password
+              key: MYSQL_PASSWORD
         - name: SPRING_PROFILES_ACTIVE
           valueFrom:
             configMapKeyRef:
@@ -65,9 +69,5 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 30
+          initialDelaySeconds: 120
           periodSeconds: 10
-        annotations:
-          prometheus.io/scrape: "true"
-          prometheus.io/port: "8080"
-          prometheus.io/path: "/actuator/prometheus"

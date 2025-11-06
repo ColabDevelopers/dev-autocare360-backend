@@ -3,13 +3,12 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - configmap.yaml
-  - secrets.yaml
   - app-deployment.yaml
   - app-service.yaml
   - db-deployment.yaml
   - db-service.yaml
-  - ../volumes/mysql-pvc.yaml
-  - ../network/ingress.yaml
-  - ../RBAC/serviceaccount.yaml
-  - ../RBAC/role.yaml
-  - ../RBAC/rolebinding.yaml
+  - storage/mysql-pvc.yaml
+  - network/ingress.yaml
+  - rbac/serviceaccount.yaml
+  - rbac/role.yaml
+  - rbac/rolebinding.yaml

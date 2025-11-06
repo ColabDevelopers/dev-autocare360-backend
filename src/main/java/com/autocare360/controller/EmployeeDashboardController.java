@@ -10,10 +10,12 @@ import com.autocare360.dto.UpdateJobStatusRequestDTO;
 import com.autocare360.dto.WeeklyWorkloadDTO;
 import com.autocare360.entity.Appointment;
 import com.autocare360.entity.Employee;
+import com.autocare360.entity.Notification;
 import com.autocare360.entity.TimeLog;
 import com.autocare360.exception.ResourceNotFoundException;
 import com.autocare360.repo.AppointmentRepository;
 import com.autocare360.repo.EmployeeRepository;
+import com.autocare360.repo.NotificationRepository;
 import com.autocare360.repo.TimeLogRepository;
 import com.autocare360.util.AuthUtil;
 import jakarta.validation.Valid;
@@ -35,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,6 +63,10 @@ public class EmployeeDashboardController {
   @Autowired private TimeLogRepository timeLogRepository;
 
   @Autowired private AuthUtil authUtil;
+
+  @Autowired private SimpMessagingTemplate messagingTemplate;
+
+  @Autowired private NotificationRepository notificationRepository;
 
   // 1. GET /api/employee/dashboard/summary - Dashboard statistics
   @GetMapping("/summary")
@@ -437,6 +444,50 @@ public class EmployeeDashboardController {
       // Save
       Appointment updated = appointmentRepository.save(appointment);
 
+      // Create and save notification for customer
+      String notificationTitle = "Service Update";
+      String notificationMessage = createNotificationMessage(updated, request);
+
+      Notification notification =
+          Notification.builder()
+              .userId(updated.getUserId())
+              .type("SERVICE_UPDATE")
+              .title(notificationTitle)
+              .message(notificationMessage)
+              .data(
+                  String.format(
+                      "{\"serviceId\":%d,\"status\":\"%s\",\"progress\":%d}",
+                      updated.getId(), updated.getStatus(), updated.getProgress()))
+              .isRead(false)
+              .build();
+
+      notificationRepository.save(notification);
+      logger.info("💾 Notification saved for customer ID: {}", updated.getUserId());
+
+      // Send real-time WebSocket update to customer
+      Map<String, Object> progressUpdate = new HashMap<>();
+      progressUpdate.put("type", "service_update");
+      progressUpdate.put("timestamp", LocalDateTime.now().toString());
+
+      Map<String, Object> updateData = new HashMap<>();
+      updateData.put("serviceId", updated.getId());
+      updateData.put("status", updated.getStatus());
+      updateData.put("progress", updated.getProgress());
+      updateData.put("vehicle", updated.getVehicle());
+      updateData.put("service", updated.getService());
+      updateData.put("customerId", updated.getUserId());
+      updateData.put("notificationTitle", notificationTitle);
+      updateData.put("notificationMessage", notificationMessage);
+
+      progressUpdate.put("data", updateData);
+
+      // Broadcast to WebSocket topic
+      logger.info(
+          "📡 Broadcasting service update to /topic/service-updates: serviceId={}, progress={}%",
+          updated.getId(), updated.getProgress());
+      messagingTemplate.convertAndSend("/topic/service-updates", progressUpdate);
+      logger.info("✅ WebSocket message sent successfully");
+
       // Build response
       JobStatusUpdateResponseDTO response = new JobStatusUpdateResponseDTO();
       response.setJobId(updated.getId());
@@ -505,5 +556,49 @@ public class EmployeeDashboardController {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Error starting job: " + e.getMessage());
     }
+  }
+
+  // Helper method to create notification message
+  private String createNotificationMessage(
+      Appointment appointment, UpdateJobStatusRequestDTO request) {
+    StringBuilder message = new StringBuilder();
+
+    // Service and vehicle info
+    message.append(
+        String.format(
+            "Your %s service for %s", appointment.getService(), appointment.getVehicle()));
+
+    // Status change message
+    if (request.getStatus() != null) {
+      String statusMsg = "";
+      switch (request.getStatus()) {
+        case "IN_PROGRESS":
+          statusMsg = " is now in progress";
+          break;
+        case "COMPLETED":
+          statusMsg = " has been completed";
+          break;
+        case "CANCELLED":
+          statusMsg = " has been cancelled";
+          break;
+        case "PENDING":
+          statusMsg = " is pending";
+          break;
+        default:
+          statusMsg = " status updated to " + request.getStatus();
+      }
+      message.append(statusMsg);
+    }
+
+    // Progress update message
+    if (request.getProgress() != null && request.getStatus() == null) {
+      message.append(String.format(" - Progress updated to %d%%", request.getProgress()));
+    } else if (request.getProgress() != null) {
+      message.append(String.format(" (%d%% complete)", request.getProgress()));
+    }
+
+    message.append(".");
+
+    return message.toString();
   }
 }
