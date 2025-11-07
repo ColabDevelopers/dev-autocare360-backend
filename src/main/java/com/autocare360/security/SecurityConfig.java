@@ -30,9 +30,11 @@ public class SecurityConfig {
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+						.requestMatchers("/ws/").permitAll() // Allow WebSocket connections
 						.requestMatchers("/api/vehicles/**").hasAnyRole("ADMIN", "CUSTOMER")
 						.anyRequest().authenticated()
+
                 )
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();

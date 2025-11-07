@@ -9,10 +9,15 @@ import com.autocare360.entity.Employee;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
-    
+
     // Find active employees only
     List<Employee> findByStatus(String status);
-    
+
     // Find employee by email
     Employee findByEmail(String email);
+
+    List<Employee> findByActiveTrue();
+
+    List<Employee> findByDepartmentAndActiveTrue(String department);
+
 }
