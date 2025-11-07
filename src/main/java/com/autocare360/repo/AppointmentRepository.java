@@ -15,6 +15,9 @@ import com.autocare360.entity.Appointment;
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
   List<Appointment> findByStatusOrderByDateAscTimeAsc(String status);
 
+  // Get all appointments ordered by date and time (ascending - oldest first)
+  List<Appointment> findAllByOrderByDateAscTimeAsc();
+
   // Customer queries
   List<Appointment> findByUser_IdOrderByDateDescTimeDesc(Long userId);
 
@@ -35,6 +38,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
   // Employee Dashboard Queries - Find by employee and date
   List<Appointment> findByAssignedEmployee_IdAndDateOrderByTimeAsc(Long employeeId, LocalDate date);
+
+  // Find appointments by employee email and date (for users logged in as employees)
+  List<Appointment> findByAssignedEmployee_EmailAndDateOrderByTimeAsc(String email, LocalDate date);
 
   List<Appointment> findByAssignedEmployee_IdAndDateBetween(
       Long employeeId, LocalDate startDate, LocalDate endDate);

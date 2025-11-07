@@ -40,7 +40,7 @@ public class AppointmentService {
 
 	@Transactional(readOnly = true)
 	public List<AppointmentResponse> listAll() {
-		List<Appointment> appointments = appointmentRepository.findAll();
+		List<Appointment> appointments = appointmentRepository.findAllByOrderByDateAscTimeAsc();
 		return appointments.stream()
 				.map(this::toResponse)
 				.collect(Collectors.toList());
