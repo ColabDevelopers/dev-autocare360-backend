@@ -260,11 +260,18 @@ public class ProjectRequestController {
     public ResponseEntity<?> updateProjectRequest(@PathVariable Long id,
                                                   @RequestBody ProjectRequestUpdateDTO updateDTO,
                                                   @RequestHeader(value = "Authorization", required = false) String auth) {
+        log.info("🔄 PUT /api/project-requests/{} called", id);
+        log.info("📝 Update DTO received: {}", updateDTO);
+        log.info("🔐 Authorization header present: {}", auth != null ? "Yes" : "No");
+        
         try {
             boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
             Long userId = getUserIdFromAuth(auth);
             
+            log.info("👤 User ID: {}, Is Admin: {}", userId, isAdmin);
+            
             if (!isAdmin && userId == null) {
+                log.warn("❌ Unauthorized access - no user ID found");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Unauthorized access"));
             }
@@ -272,38 +279,51 @@ public class ProjectRequestController {
             // Check if project exists and user has access
             Optional<ProjectRequestResponseDTO> existingProject = projectRequestService.getProjectRequestById(id);
             if (existingProject.isEmpty()) {
+                log.warn("❌ Project request not found: {}", id);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Project request not found"));
             }
             
+            log.info("📋 Existing project customer ID: {}, Current user ID: {}", 
+                    existingProject.get().getCustomerId(), userId);
+            
             // Only admin or project owner can update (customers can only update limited fields)
             if (!isAdmin && !existingProject.get().getCustomerId().equals(userId)) {
+                log.warn("❌ Access denied - user {} cannot update project owned by {}", 
+                        userId, existingProject.get().getCustomerId());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "Access denied"));
             }
             
             // Customers can only update certain fields
             if (!isAdmin) {
+                log.info("🔒 Restricting customer update to allowed fields only");
                 ProjectRequestUpdateDTO customerUpdateDTO = new ProjectRequestUpdateDTO();
                 customerUpdateDTO.setProjectName(updateDTO.getProjectName());
+                customerUpdateDTO.setProjectType(updateDTO.getProjectType()); // Add project type
+                customerUpdateDTO.setPriority(updateDTO.getPriority()); // Add priority
                 customerUpdateDTO.setVehicleDetails(updateDTO.getVehicleDetails());
                 customerUpdateDTO.setDescription(updateDTO.getDescription());
                 customerUpdateDTO.setAttachments(updateDTO.getAttachments());
-                customerUpdateDTO.setRequestedAt(updateDTO.getRequestedAt()); // Allow customers to update request date
+                customerUpdateDTO.setRequestedAt(updateDTO.getRequestedAt());
+                log.info("📝 Customer DTO after filtering: {}", customerUpdateDTO);
                 updateDTO = customerUpdateDTO;
             }
             
+            log.info("🚀 Calling service to update project with DTO: {}", updateDTO);
             Optional<ProjectRequestResponseDTO> updatedRequest = projectRequestService.updateProjectRequest(id, updateDTO);
             
             if (updatedRequest.isPresent()) {
+                log.info("✅ Project updated successfully: {}", updatedRequest.get().getId());
                 return ResponseEntity.ok(updatedRequest.get());
             } else {
+                log.warn("❌ Service returned empty result for project update: {}", id);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Project request not found"));
             }
             
         } catch (Exception e) {
-            log.error("Error updating project request with ID: {}", id, e);
+            log.error("💥 Error updating project request with ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to update project request"));
         }
