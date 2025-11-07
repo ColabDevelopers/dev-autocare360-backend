@@ -314,19 +314,40 @@ public class ProjectRequestController {
                                                   @RequestHeader(value = "Authorization", required = false) String auth) {
         try {
             boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
+            Long userId = getUserIdFromAuth(auth);
             
-            if (!isAdmin) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Only administrators can delete project requests"));
+            if (!isAdmin && userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Authentication required"));
             }
             
-            boolean deleted = projectRequestService.deleteProjectRequest(id);
+            // Check if project exists and get project details
+            Optional<ProjectRequestResponseDTO> existingProject = projectRequestService.getProjectRequestById(id);
+            if (existingProject.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Project request not found"));
+            }
+            
+            // Check ownership (customers can only delete their own projects)
+            if (!isAdmin && !existingProject.get().getCustomerId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "You can only delete your own project requests"));
+            }
+            
+            // Check project status - only allow deletion of PENDING projects
+            String projectStatus = existingProject.get().getStatus();
+            if (!"PENDING".equals(projectStatus)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Cannot delete project - it's already " + projectStatus.toLowerCase().replace("_", " ")));
+            }
+            
+            boolean deleted = projectRequestService.deleteProjectRequest(id, userId, isAdmin);
             
             if (deleted) {
                 return ResponseEntity.ok(Map.of("message", "Project request deleted successfully"));
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Project request not found"));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", "Failed to delete project request"));
             }
             
         } catch (Exception e) {

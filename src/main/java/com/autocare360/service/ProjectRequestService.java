@@ -229,14 +229,43 @@ public class ProjectRequestService {
     }
     
     @Transactional
-    public boolean deleteProjectRequest(Long id) {
-        Optional<ProjectRequest> project = projectRequestRepository.findById(id);
-        if (project.isPresent()) {
-            projectRequestRepository.delete(project.get());
-            log.info("Deleted project request with ID: {}", id);
-            return true;
+    public boolean deleteProjectRequest(Long id, Long userId, boolean isAdmin) {
+        log.info("🗑️ Delete request - Project ID: {}, User ID: {}, Is Admin: {}", id, userId, isAdmin);
+        
+        Optional<ProjectRequest> projectOpt = projectRequestRepository.findById(id);
+        if (projectOpt.isEmpty()) {
+            log.warn("❌ Project request with ID {} not found", id);
+            return false;
         }
-        return false;
+        
+        ProjectRequest project = projectOpt.get();
+        
+        // Additional ownership validation (belt-and-suspenders approach)
+        if (!isAdmin && !project.getCustomerId().equals(userId)) {
+            log.warn("❌ User {} attempted to delete project {} owned by {}", userId, id, project.getCustomerId());
+            throw new RuntimeException("You can only delete your own project requests");
+        }
+        
+        // Additional status validation
+        if (!"PENDING".equals(project.getStatus())) {
+            log.warn("❌ Cannot delete project {} with status {}", id, project.getStatus());
+            throw new RuntimeException("Cannot delete project - it's already " + project.getStatus().toLowerCase().replace("_", " "));
+        }
+        
+        try {
+            projectRequestRepository.delete(project);
+            log.info("✅ Successfully deleted project request with ID: {} by user: {}", id, userId);
+            return true;
+        } catch (Exception e) {
+            log.error("💥 Failed to delete project request with ID: {}", id, e);
+            throw new RuntimeException("Failed to delete project request");
+        }
+    }
+    
+    // Keep the old method for backward compatibility if needed elsewhere
+    @Transactional
+    public boolean deleteProjectRequest(Long id) {
+        return deleteProjectRequest(id, null, true); // Default to admin behavior
     }
     
     public Long getProjectRequestCountByStatus(String status) {
