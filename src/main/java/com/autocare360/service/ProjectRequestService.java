@@ -196,8 +196,53 @@ public class ProjectRequestService {
             existing.setAttachments(updateDTO.getAttachments());
         }
         if (updateDTO.getAssignedEmployeeId() != null) {
-            Optional<Employee> employee = employeeRepository.findById(updateDTO.getAssignedEmployeeId());
-            employee.ifPresent(existing::setAssignedEmployee);
+            log.info("👥 Assigning employee ID: {} to project {}", updateDTO.getAssignedEmployeeId(), id);
+            Optional<User> userEmployee = userRepository.findById(updateDTO.getAssignedEmployeeId());
+            if (userEmployee.isPresent()) {
+                User user = userEmployee.get();
+                log.info("✅ User found: {} - {}", user.getId(), user.getName());
+                
+                // Check if the user has employee fields
+                if (user.getEmployeeNo() != null || user.getDepartment() != null) {
+                    // Check if employee record already exists in employees table by ID or email
+                    Optional<Employee> existingEmployee = employeeRepository.findById(user.getId());
+                    if (!existingEmployee.isPresent() && user.getEmail() != null) {
+                        // Also check by email in case there's already an employee with this email
+                        Employee empByEmail = employeeRepository.findByEmail(user.getEmail());
+                        existingEmployee = empByEmail != null ? Optional.of(empByEmail) : Optional.empty();
+                    }
+                    
+                    Employee emp;
+                    
+                    if (existingEmployee.isPresent()) {
+                        emp = existingEmployee.get();
+                        log.info("🔍 Using existing employee record: {} - {}", emp.getId(), emp.getName());
+                    } else {
+                        // Create new Employee record in employees table
+                        emp = new Employee();
+                        // DON'T set ID - let Hibernate auto-generate it
+                        emp.setName(user.getName());
+                        emp.setEmail(user.getEmail());
+                        emp.setPhoneNumber(user.getPhone());
+                        emp.setStatus("ACTIVE");
+                        emp.setHireDate(LocalDate.now());
+                        
+                        // Save to employees table first
+                        emp = employeeRepository.save(emp);
+                        log.info("📝 Created new employee record: {} - {}", emp.getId(), emp.getName());
+                    }
+                    
+                    existing.setAssignedEmployee(emp);
+                    log.info("🔄 Employee assigned to project. Current assigned employee: {}", 
+                            existing.getAssignedEmployeeId());
+                } else {
+                    log.warn("❌ User with ID {} is not an employee (no employee_no or department)", updateDTO.getAssignedEmployeeId());
+                }
+            } else {
+                log.warn("❌ User with ID {} not found", updateDTO.getAssignedEmployeeId());
+            }
+        } else {
+            log.info("👥 No employee assignment in update DTO");
         }
         if (updateDTO.getRequestedAt() != null) {
             log.info("🗓️ Current requested date: {}", existing.getRequestedAt());
@@ -208,9 +253,12 @@ public class ProjectRequestService {
             log.info("⚠️ RequestedAt is null in update DTO");
         }
         
+        log.info("🔄 Before saving - Employee ID: {}, Status: {}", existing.getAssignedEmployeeId(), existing.getStatus());
         log.info("🔄 Before saving - requested date: {}", existing.getRequestedAt());
         ProjectRequest updated = projectRequestRepository.save(existing);
+        log.info("✅ After saving - Employee ID: {}, Status: {}", updated.getAssignedEmployeeId(), updated.getStatus());
         log.info("✅ After saving - requested date: {}", updated.getRequestedAt());
+        log.info("🔍 Entity saved successfully - ID: {}", updated.getId());
         
         // Send notification if status changed
         if (!oldStatus.equals(updated.getStatus())) {

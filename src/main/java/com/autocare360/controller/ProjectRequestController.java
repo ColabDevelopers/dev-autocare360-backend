@@ -381,31 +381,106 @@ public class ProjectRequestController {
     public ResponseEntity<?> approveProjectRequest(@PathVariable Long id,
                                                    @RequestBody(required = false) ProjectRequestUpdateDTO approvalData,
                                                    @RequestHeader(value = "Authorization", required = false) String auth) {
+        log.info("🔓 PUT /api/project-requests/{}/approve called", id);
+        log.info("🔐 Authorization header present: {}", auth != null ? "Yes" : "No");
+        
         try {
+            Long userId = getUserIdFromAuth(auth);
             boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
             
+            log.info("👤 User ID: {}, Is Admin: {}", userId, isAdmin);
+            
             if (!isAdmin) {
+                log.warn("❌ Access denied - user {} is not an admin", userId);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "Only administrators can approve project requests"));
             }
+            
+            log.info("✅ Admin access confirmed for user {}", userId);
             
             if (approvalData == null) {
                 approvalData = new ProjectRequestUpdateDTO();
             }
             
+            log.info("📋 Approval data: {}", approvalData);
             Optional<ProjectRequestResponseDTO> approvedRequest = projectRequestService.approveProjectRequest(id, approvalData);
             
             if (approvedRequest.isPresent()) {
+                log.info("✅ Project {} approved successfully", id);
                 return ResponseEntity.ok(approvedRequest.get());
             } else {
+                log.warn("❌ Project {} not found for approval", id);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Project request not found"));
             }
             
         } catch (Exception e) {
-            log.error("Error approving project request with ID: {}", id, e);
+            log.error("💥 Error approving project request with ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to approve project request"));
+        }
+    }
+    
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateProjectStatus(@PathVariable Long id,
+                                                @RequestBody ProjectRequestUpdateDTO statusUpdateDTO,
+                                                @RequestHeader(value = "Authorization", required = false) String auth) {
+        log.info("🔄 PUT /api/project-requests/{}/status called", id);
+        log.info("📋 Status update DTO: {}", statusUpdateDTO);
+        log.info("🔐 Authorization header present: {}", auth != null ? "Yes" : "No");
+        
+        try {
+            Long userId = getUserIdFromAuth(auth);
+            boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
+            
+            log.info("👤 User ID: {}, Is Admin: {}", userId, isAdmin);
+            
+            String newStatus = statusUpdateDTO.getStatus();
+            Long assignedEmployeeId = statusUpdateDTO.getAssignedEmployeeId();
+            
+            log.info("🎯 New Status: {}, Assigned Employee ID: {}", newStatus, assignedEmployeeId);
+            
+            if (newStatus == null) {
+                log.warn("❌ No status provided in request body");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Status is required"));
+            }
+            
+            // Only admins can change status to APPROVED, REJECTED, or administrative statuses
+            if (("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus) || 
+                 "UNDER_REVIEW".equals(newStatus) || "IN_PROGRESS".equals(newStatus)) && !isAdmin) {
+                log.warn("❌ User {} tried to set status to {} without admin privileges", userId, newStatus);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Only administrators can approve, reject, or change administrative status"));
+            }
+            
+            // Only admins can assign employees
+            if (assignedEmployeeId != null && !isAdmin) {
+                log.warn("❌ User {} tried to assign employee {} without admin privileges", userId, assignedEmployeeId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Only administrators can assign employees"));
+            }
+            
+            log.info("✅ Status update authorized for user {} to set status {} and assign employee {}", 
+                    userId, newStatus, assignedEmployeeId);
+            
+            // Use the full DTO which includes both status and assignedEmployeeId
+            Optional<ProjectRequestResponseDTO> updatedRequest = projectRequestService.updateProjectRequest(id, statusUpdateDTO);
+            
+            if (updatedRequest.isPresent()) {
+                log.info("✅ Project {} updated - Status: {}, Assigned Employee: {}", 
+                        id, newStatus, updatedRequest.get().getAssignedEmployeeId());
+                return ResponseEntity.ok(updatedRequest.get());
+            } else {
+                log.warn("❌ Project {} not found for status update", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Project request not found"));
+            }
+            
+        } catch (Exception e) {
+            log.error("💥 Error updating project status for ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to update project status"));
         }
     }
     

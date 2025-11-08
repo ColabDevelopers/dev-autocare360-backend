@@ -36,6 +36,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       String token = header.substring(7);
       log.debug(
           "Processing JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
+      log.debug("Token length: {}, Token preview: {}...", token.length(), token.substring(0, Math.min(20, token.length())));
 
       if (jwtService.isTokenValid(token)) {
         String subject = jwtService.extractSubject(token);
