@@ -29,7 +29,10 @@ clean:
 	mvn clean
 	docker-compose down -v
 
+# Deploy to local development environment
+deploy-dev:
+	docker-compose up --build -d
+
 # Deploy to production using GitHub (pushes current branch to main, triggering CD workflow)
 deploy-prod:
-	cd $(ROOT_DIR) && \
 	git push origin HEAD:main
