@@ -1,6 +1,13 @@
 package com.autocare360.entity;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,11 +20,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
 
 @Entity
 @Table(name = "appointments")
@@ -62,11 +64,17 @@ public class Appointment {
   private String
       technician; // DEPRECATED: Keep for backward compatibility, use assignedEmployee instead
 
-  // Employee reference
+  // Employee reference (from Employee table - for backward compatibility)
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "employee_id")
   @JsonIgnore
   private Employee assignedEmployee;
+
+  // Assigned User (employee from User table)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "assigned_user_id")
+  @JsonIgnore
+  private User assignedUser;
 
   // NEW: Project tracking fields
   @Column(name = "estimated_hours", precision = 5, scale = 2)
@@ -210,6 +218,20 @@ public class Appointment {
 
   public void setAssignedEmployee(Employee assignedEmployee) {
     this.assignedEmployee = assignedEmployee;
+  }
+
+  // Getters and setters for assigned User (employee from users table)
+  public User getAssignedUser() {
+    return assignedUser;
+  }
+
+  public void setAssignedUser(User assignedUser) {
+    this.assignedUser = assignedUser;
+  }
+
+  // Helper method to get assigned user ID
+  public Long getAssignedUserId() {
+    return assignedUser != null ? assignedUser.getId() : null;
   }
 
   // Helper method to get employeeId

@@ -1,5 +1,36 @@
 package com.autocare360.controller;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.autocare360.dto.AssignedJobDTO;
 import com.autocare360.dto.EmployeeDashboardSummaryDTO;
 import com.autocare360.dto.JobActionResponseDTO;
@@ -18,36 +49,8 @@ import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.NotificationRepository;
 import com.autocare360.repo.TimeLogRepository;
 import com.autocare360.util.AuthUtil;
+
 import jakarta.validation.Valid;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/employee/dashboard")
@@ -82,7 +85,7 @@ public class EmployeeDashboardController {
 
     // 1. Count active jobs (IN_PROGRESS or APPROVED)
     List<Appointment> activeJobs =
-        appointmentRepository.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
+        appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
             employeeId, Arrays.asList("IN_PROGRESS", "APPROVED"));
     Integer activeJobsCount = activeJobs.size();
     Integer jobsInProgress =
@@ -100,7 +103,7 @@ public class EmployeeDashboardController {
     LocalDate monthStart = today.withDayOfMonth(1);
     LocalDate monthEnd = today.withDayOfMonth(today.lengthOfMonth());
     Integer completedThisMonth =
-        appointmentRepository.countByAssignedEmployeeIdAndStatusAndUpdatedAtBetween(
+        appointmentRepository.countByAssignedUserIdAndStatusAndUpdatedAtBetween(
             employeeId, "COMPLETED", monthStart.atStartOfDay(), monthEnd.atTime(23, 59, 59));
     if (completedThisMonth == null) completedThisMonth = 0;
 
@@ -156,15 +159,15 @@ public class EmployeeDashboardController {
     List<Appointment> appointments;
     if (status != null) {
       appointments =
-          appointmentRepository.findByAssignedEmployee_IdAndStatusOrderByDateAscTimeAsc(
+          appointmentRepository.findByAssignedUser_IdAndStatusOrderByDateAscTimeAsc(
               employeeId, status);
     } else if (!includeCompleted) {
       appointments =
-          appointmentRepository.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
+          appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
               employeeId, Arrays.asList("IN_PROGRESS", "APPROVED", "PENDING"));
     } else {
       appointments =
-          appointmentRepository.findByAssignedEmployee_IdOrderByDateAscTimeAsc(employeeId);
+          appointmentRepository.findByAssignedUser_IdOrderByDateAscTimeAsc(employeeId);
     }
 
     // Map to DTOs
@@ -230,7 +233,7 @@ public class EmployeeDashboardController {
 
     // Fetch today's appointments
     List<Appointment> appointments =
-        appointmentRepository.findByAssignedEmployee_IdAndDateOrderByTimeAsc(employeeId, today);
+        appointmentRepository.findByAssignedUser_IdAndDateOrderByTimeAsc(employeeId, today);
 
     // Map to DTOs
     List<TodayAppointmentDTO> todayAppointments =
@@ -333,7 +336,7 @@ public class EmployeeDashboardController {
 
     // Fetch appointments in range
     List<Appointment> appointments =
-        appointmentRepository.findByAssignedEmployee_IdAndDateBetween(
+        appointmentRepository.findByAssignedUser_IdAndDateBetween(
             employeeId, startDate, endDate);
 
     // DEBUG: Log results
@@ -398,9 +401,9 @@ public class EmployeeDashboardController {
               .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
       // Verify employee is assigned
-      // Force load the employee relationship to check assignment
-      if (appointment.getAssignedEmployee() == null
-          || !appointment.getAssignedEmployee().getId().equals(employeeId)) {
+      // Force load the assignedUser relationship to check assignment
+      if (appointment.getAssignedUser() == null
+          || !appointment.getAssignedUser().getId().equals(employeeId)) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not assigned to this job");
       }
 
@@ -520,9 +523,9 @@ public class EmployeeDashboardController {
               .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
       // Verify employee is assigned
-      // Force load the employee relationship to check assignment
-      if (appointment.getAssignedEmployee() == null
-          || !appointment.getAssignedEmployee().getId().equals(employeeId)) {
+      // Force load the assignedUser relationship to check assignment
+      if (appointment.getAssignedUser() == null
+          || !appointment.getAssignedUser().getId().equals(employeeId)) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not assigned to this job");
       }
 

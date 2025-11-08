@@ -16,7 +16,6 @@ import com.autocare360.dto.AvailabilityResponse;
 import com.autocare360.entity.Appointment;
 import com.autocare360.entity.User;
 import com.autocare360.repo.AppointmentRepository;
-import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,6 @@ public class AppointmentService {
 
 	private final AppointmentRepository appointmentRepository;
 	private final UserRepository userRepository;
-	private final EmployeeRepository employeeRepository;
 	private final SimpMessagingTemplate messagingTemplate;
 
 	@Transactional(readOnly = true)
@@ -48,8 +46,15 @@ public class AppointmentService {
 
 	@Transactional(readOnly = true)
 	public List<AppointmentResponse> listByEmployeeAndStatus(Long employeeId, List<String> statuses) {
+		// Query by assigned_user_id (User table FK), not employee_id
 		List<Appointment> appointments = appointmentRepository
-				.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(employeeId, statuses);
+				.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(employeeId, statuses);
+		
+		System.out.println("=== Employee Appointments Query ===");
+		System.out.println("User ID: " + employeeId);
+		System.out.println("Statuses: " + statuses);
+		System.out.println("Found " + appointments.size() + " appointments");
+		
 		return appointments.stream()
 				.map(this::toResponse)
 				.collect(Collectors.toList());
@@ -70,15 +75,27 @@ public class AppointmentService {
 		appointment.setNotes(request.getNotes());
 		appointment.setTechnician(request.getTechnician());
 
-		// If technician is specified, try to find and assign employee from Employee table
+		// If technician is specified, find and assign user (employee from users table)
 		if (request.getTechnician() != null && !request.getTechnician().isEmpty()) {
+			System.out.println("[AppointmentService] Looking for technician: " + request.getTechnician());
 			final Appointment appt = appointment; // Make final for lambda
-			employeeRepository.findByName(request.getTechnician()).ifPresent(employee -> {
-				appt.setAssignedEmployee(employee);
+			
+			// Find in User table by name
+			userRepository.findByName(request.getTechnician()).ifPresent(employeeUser -> {
+				System.out.println("[AppointmentService] Found user: " + employeeUser.getName() + ", ID: " + employeeUser.getId() + ", employeeNo: " + employeeUser.getEmployeeNo());
+				appt.setAssignedUser(employeeUser);
 			});
+			
+			if (appointment.getAssignedUser() == null) {
+				System.out.println("[AppointmentService] WARNING: No user found with name: " + request.getTechnician());
+			}
 		}
 
 		appointment = appointmentRepository.save(appointment);
+		
+		// Log after save
+		System.out.println("[AppointmentService] Appointment saved with ID: " + appointment.getId() + 
+			", assignedUser: " + (appointment.getAssignedUser() != null ? appointment.getAssignedUser().getId() : "NULL"));
 
 		// Broadcast new appointment to admin dashboard listeners
 		try {
@@ -106,10 +123,13 @@ public class AppointmentService {
 		if (request.getNotes() != null) appointment.setNotes(request.getNotes());
 		if (request.getTechnician() != null) {
 			appointment.setTechnician(request.getTechnician());
-			// Update assigned employee if technician name is provided from Employee table
+			// Update assigned user if technician name is provided (users with employee_no are employees)
 			final Appointment appt = appointment; // Make final for lambda
-			employeeRepository.findByName(request.getTechnician()).ifPresent(employee -> {
-				appt.setAssignedEmployee(employee);
+			
+			userRepository.findByName(request.getTechnician()).ifPresent(employeeUser -> {
+				if (employeeUser.getEmployeeNo() != null && !employeeUser.getEmployeeNo().isEmpty()) {
+					appt.setAssignedUser(employeeUser);
+				}
 			});
 		}
 

@@ -21,7 +21,7 @@ import com.autocare360.service.AppointmentService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/employee/appointments")
+@RequestMapping("/api/employee/appointments")
 @RequiredArgsConstructor
 public class EmployeeAppointmentController {
 
@@ -80,8 +80,16 @@ public class EmployeeAppointmentController {
             ));
         }
 
-        // Get only CONFIRMED and IN_PROGRESS appointments for this employee (user)
-        List<String> allowedStatuses = Arrays.asList("CONFIRMED", "IN_PROGRESS");
+        // Get appointments for today with all active statuses.
+        // Include CONFIRMED (used in DB) as well as APPROVED/PENDING/IN_PROGRESS/COMPLETED
+        // We intentionally include all common status values so employees see today's jobs regardless of small naming differences.
+        List<String> allowedStatuses = Arrays.asList(
+            "PENDING",
+            "APPROVED",
+            "CONFIRMED",
+            "IN_PROGRESS",
+            "COMPLETED"
+        );
         List<AppointmentResponse> appointments = appointmentService.listByEmployeeAndStatus(
             user.getId(), 
             allowedStatuses
@@ -92,7 +100,7 @@ public class EmployeeAppointmentController {
 
     /**
      * Start service for an appointment (update status to IN_PROGRESS)
-     * Only allows updating CONFIRMED appointments to IN_PROGRESS
+     * Allows updating PENDING or APPROVED appointments to IN_PROGRESS
      */
     @PutMapping("/{id}/start")
     public ResponseEntity<?> startService(
