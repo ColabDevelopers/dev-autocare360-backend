@@ -544,6 +544,45 @@ public class ProjectRequestController {
         }
     }
     
+    @GetMapping("/assigned")
+    public ResponseEntity<?> getAssignedProjectRequests(
+            @RequestHeader(value = "Authorization", required = false) String auth) {
+        
+        log.info("🔍 GET /api/project-requests/assigned called");
+        log.info("🔐 Authorization header present: {}", auth != null ? "Yes" : "No");
+        
+        try {
+            boolean isEmployee = jwtService.hasRole(auth, "EMPLOYEE");
+            boolean isAdmin = jwtService.hasRole(auth, "ADMIN");
+            Long userId = getUserIdFromAuth(auth);
+            
+            log.info("👤 User ID: {}, Is Employee: {}, Is Admin: {}", userId, isEmployee, isAdmin);
+            
+            if ((!isEmployee && !isAdmin) || userId == null) {
+                log.warn("❌ Access denied - user {} does not have EMPLOYEE or ADMIN role", userId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Only employees can access assigned projects"));
+            }
+            
+            log.info("✅ Authorization confirmed for user {} to access assigned projects", userId);
+            
+            List<ProjectRequestResponseDTO> assignedProjects = 
+                    projectRequestService.getProjectRequestsByEmployee(userId);
+            
+            log.info("📋 Found {} assigned projects for employee {}", assignedProjects.size(), userId);
+            
+            return ResponseEntity.ok(Map.of(
+                    "items", assignedProjects,
+                    "total", assignedProjects.size()
+            ));
+            
+        } catch (Exception e) {
+            log.error("💥 Error fetching assigned project requests for user", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to fetch assigned projects"));
+        }
+    }
+    
     @GetMapping("/stats")
     public ResponseEntity<?> getProjectRequestStats(@RequestHeader(value = "Authorization", required = false) String auth) {
         try {
