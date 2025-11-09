@@ -1,6 +1,8 @@
 # Makefile for AutoCare360 Backend
 
-.PHONY: setup build test lint clean deploy
+ROOT_DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
+.PHONY: setup build test lint format clean deploy-prod
 
 # Setup local development environment
 setup:
@@ -17,6 +19,10 @@ test:
 # Lint code (assuming Spotless or similar is configured)
 lint:
 	mvn spotless:check
+
+# Format code using Spotless
+format:
+	mvn spotless:apply
 
 # Clean build artifacts
 clean:
