@@ -1,36 +1,5 @@
 package com.autocare360.controller;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.autocare360.dto.AssignedJobDTO;
 import com.autocare360.dto.EmployeeDashboardSummaryDTO;
 import com.autocare360.dto.JobActionResponseDTO;
@@ -49,8 +18,36 @@ import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.NotificationRepository;
 import com.autocare360.repo.TimeLogRepository;
 import com.autocare360.util.AuthUtil;
-
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/employee/dashboard")
@@ -166,8 +163,7 @@ public class EmployeeDashboardController {
           appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
               employeeId, Arrays.asList("IN_PROGRESS", "APPROVED", "PENDING"));
     } else {
-      appointments =
-          appointmentRepository.findByAssignedUser_IdOrderByDateAscTimeAsc(employeeId);
+      appointments = appointmentRepository.findByAssignedUser_IdOrderByDateAscTimeAsc(employeeId);
     }
 
     // Map to DTOs
@@ -336,8 +332,7 @@ public class EmployeeDashboardController {
 
     // Fetch appointments in range
     List<Appointment> appointments =
-        appointmentRepository.findByAssignedUser_IdAndDateBetween(
-            employeeId, startDate, endDate);
+        appointmentRepository.findByAssignedUser_IdAndDateBetween(employeeId, startDate, endDate);
 
     // DEBUG: Log results
     logger.info("   Appointments Found: {}", appointments.size());

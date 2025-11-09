@@ -1,8 +1,14 @@
 package com.autocare360.controller;
 
+import com.autocare360.dto.VehicleCreateDTO;
+import com.autocare360.dto.VehicleDTO;
+import com.autocare360.entity.Vehicle;
+import com.autocare360.security.JwtService;
+import com.autocare360.service.VehicleService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -15,15 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.autocare360.dto.VehicleCreateDTO;
-import com.autocare360.dto.VehicleDTO;
-import com.autocare360.entity.Vehicle;
-import com.autocare360.security.JwtService;
-import com.autocare360.service.VehicleService;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/vehicles")

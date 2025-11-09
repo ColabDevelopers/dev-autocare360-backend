@@ -1,15 +1,13 @@
 package com.autocare360.repo;
 
+import com.autocare360.entity.Appointment;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import com.autocare360.entity.Appointment;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
@@ -24,25 +22,26 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
   // Employee queries - Find by assigned user (employee from users table)
   List<Appointment> findByAssignedUser_IdAndDateOrderByTimeAsc(Long userId, LocalDate date);
 
-  // Employee queries - Find by assigned user, date and status  
+  // Employee queries - Find by assigned user, date and status
   List<Appointment> findByAssignedUser_IdAndDateAndStatusInOrderByTimeAsc(
       Long userId, LocalDate date, List<String> statuses);
 
   List<Appointment> findByAssignedUser_IdOrderByDateAscTimeAsc(Long userId);
 
   // Find appointments by date and technician for availability check
-  List<Appointment> findByDateAndTechnicianAndStatusNot(LocalDate date, String technician, String excludeStatus);
+  List<Appointment> findByDateAndTechnicianAndStatusNot(
+      LocalDate date, String technician, String excludeStatus);
 
   // Find appointments by date and time for availability check
-  List<Appointment> findByDateAndTimeAndStatusNot(LocalDate date, java.time.LocalTime time, String excludeStatus);
+  List<Appointment> findByDateAndTimeAndStatusNot(
+      LocalDate date, java.time.LocalTime time, String excludeStatus);
 
   // Employee Dashboard Queries - Find by assigned user (from users table) and status
   List<Appointment> findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
       Long userId, List<String> statuses);
 
   // Employee Dashboard Queries - Find by assigned user (from users table) and single status
-  List<Appointment> findByAssignedUser_IdAndStatusOrderByDateAscTimeAsc(
-      Long userId, String status);
+  List<Appointment> findByAssignedUser_IdAndStatusOrderByDateAscTimeAsc(Long userId, String status);
 
   // Employee Dashboard Queries - Find by assigned user and date range
   List<Appointment> findByAssignedUser_IdAndDateBetween(
@@ -80,7 +79,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
       @Param("start") LocalDateTime start,
       @Param("end") LocalDateTime end);
 
-  // Employee Dashboard Queries - Count completed by user in date range  
+  // Employee Dashboard Queries - Count completed by user in date range
   @Query(
       "SELECT COUNT(a) FROM Appointment a WHERE a.assignedUser.id = :userId "
           + "AND a.status = :status AND a.updatedAt BETWEEN :start AND :end")
