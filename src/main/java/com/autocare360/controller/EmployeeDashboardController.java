@@ -82,7 +82,7 @@ public class EmployeeDashboardController {
 
     // 1. Count active jobs (IN_PROGRESS or APPROVED)
     List<Appointment> activeJobs =
-        appointmentRepository.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
+        appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
             employeeId, Arrays.asList("IN_PROGRESS", "APPROVED"));
     Integer activeJobsCount = activeJobs.size();
     Integer jobsInProgress =
@@ -100,7 +100,7 @@ public class EmployeeDashboardController {
     LocalDate monthStart = today.withDayOfMonth(1);
     LocalDate monthEnd = today.withDayOfMonth(today.lengthOfMonth());
     Integer completedThisMonth =
-        appointmentRepository.countByAssignedEmployeeIdAndStatusAndUpdatedAtBetween(
+        appointmentRepository.countByAssignedUserIdAndStatusAndUpdatedAtBetween(
             employeeId, "COMPLETED", monthStart.atStartOfDay(), monthEnd.atTime(23, 59, 59));
     if (completedThisMonth == null) completedThisMonth = 0;
 
@@ -156,15 +156,14 @@ public class EmployeeDashboardController {
     List<Appointment> appointments;
     if (status != null) {
       appointments =
-          appointmentRepository.findByAssignedEmployee_IdAndStatusOrderByDateAscTimeAsc(
+          appointmentRepository.findByAssignedUser_IdAndStatusOrderByDateAscTimeAsc(
               employeeId, status);
     } else if (!includeCompleted) {
       appointments =
-          appointmentRepository.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
+          appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
               employeeId, Arrays.asList("IN_PROGRESS", "APPROVED", "PENDING"));
     } else {
-      appointments =
-          appointmentRepository.findByAssignedEmployee_IdOrderByDateAscTimeAsc(employeeId);
+      appointments = appointmentRepository.findByAssignedUser_IdOrderByDateAscTimeAsc(employeeId);
     }
 
     // Map to DTOs
@@ -230,7 +229,7 @@ public class EmployeeDashboardController {
 
     // Fetch today's appointments
     List<Appointment> appointments =
-        appointmentRepository.findByAssignedEmployee_IdAndDateOrderByTimeAsc(employeeId, today);
+        appointmentRepository.findByAssignedUser_IdAndDateOrderByTimeAsc(employeeId, today);
 
     // Map to DTOs
     List<TodayAppointmentDTO> todayAppointments =
@@ -333,8 +332,7 @@ public class EmployeeDashboardController {
 
     // Fetch appointments in range
     List<Appointment> appointments =
-        appointmentRepository.findByAssignedEmployee_IdAndDateBetween(
-            employeeId, startDate, endDate);
+        appointmentRepository.findByAssignedUser_IdAndDateBetween(employeeId, startDate, endDate);
 
     // DEBUG: Log results
     logger.info("   Appointments Found: {}", appointments.size());
@@ -398,9 +396,9 @@ public class EmployeeDashboardController {
               .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
       // Verify employee is assigned
-      // Force load the employee relationship to check assignment
-      if (appointment.getAssignedEmployee() == null
-          || !appointment.getAssignedEmployee().getId().equals(employeeId)) {
+      // Force load the assignedUser relationship to check assignment
+      if (appointment.getAssignedUser() == null
+          || !appointment.getAssignedUser().getId().equals(employeeId)) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not assigned to this job");
       }
 
@@ -520,9 +518,9 @@ public class EmployeeDashboardController {
               .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
       // Verify employee is assigned
-      // Force load the employee relationship to check assignment
-      if (appointment.getAssignedEmployee() == null
-          || !appointment.getAssignedEmployee().getId().equals(employeeId)) {
+      // Force load the assignedUser relationship to check assignment
+      if (appointment.getAssignedUser() == null
+          || !appointment.getAssignedUser().getId().equals(employeeId)) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not assigned to this job");
       }
 

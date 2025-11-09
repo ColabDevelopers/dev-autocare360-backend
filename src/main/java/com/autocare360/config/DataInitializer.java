@@ -27,26 +27,23 @@ public class DataInitializer implements CommandLineRunner {
   public void run(String... args) throws Exception {
     // Initialize sample users if none exist
     if (userRepository.count() == 0) {
-      User user1 =
-          User.builder()
-              .email("john.doe@example.com")
-              .name("John Doe")
-              .phone("123-456-7890")
-              .passwordHash(passwordEncoder.encode("SecureDefault123!"))
-              .status("ACTIVE")
-              .createdAt(Instant.now())
-              .updatedAt(Instant.now())
-              .build();
-      User user2 =
-          User.builder()
-              .email("jane.smith@example.com")
-              .name("Jane Smith")
-              .phone("098-765-4321")
-              .passwordHash(passwordEncoder.encode("SecureDefault123!"))
-              .status("ACTIVE")
-              .createdAt(Instant.now())
-              .updatedAt(Instant.now())
-              .build();
+      User user1 = new User();
+      user1.setEmail("john.doe@example.com");
+      user1.setName("John Doe");
+      user1.setPhone("123-456-7890");
+      user1.setPasswordHash(passwordEncoder.encode("SecureDefault123!"));
+      user1.setStatus("ACTIVE");
+      user1.setCreatedAt(Instant.now());
+      user1.setUpdatedAt(Instant.now());
+
+      User user2 = new User();
+      user2.setEmail("jane.smith@example.com");
+      user2.setName("Jane Smith");
+      user2.setPhone("098-765-4321");
+      user2.setPasswordHash(passwordEncoder.encode("SecureDefault123!"));
+      user2.setStatus("ACTIVE");
+      user2.setCreatedAt(Instant.now());
+      user2.setUpdatedAt(Instant.now());
 
       userRepository.save(user1);
       userRepository.save(user2);
