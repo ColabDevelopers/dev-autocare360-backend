@@ -49,4 +49,26 @@ public class UserService {
     user.setPhone(phone);
     userRepository.save(user);
   }
+
+  public java.util.List<UserResponse> getAllCustomers() {
+    return userRepository.findAll().stream()
+        .filter(
+            user ->
+                user.getRoles().stream()
+                    .anyMatch(role -> role.getName().equalsIgnoreCase("CUSTOMER")))
+        .map(
+            user ->
+                UserResponse.builder()
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .name(user.getName())
+                    .roles(
+                        user.getRoles().stream()
+                            .map(r -> r.getName().toLowerCase(Locale.ROOT))
+                            .collect(Collectors.toList()))
+                    .status(user.getStatus() == null ? "Active" : user.getStatus())
+                    .phone(user.getPhone())
+                    .build())
+        .collect(Collectors.toList());
+  }
 }

@@ -1,0 +1,275 @@
+package com.autocare360.service;
+
+import com.autocare360.dto.AppointmentRequest;
+import com.autocare360.dto.AppointmentResponse;
+import com.autocare360.dto.AvailabilityResponse;
+import com.autocare360.entity.Appointment;
+import com.autocare360.entity.User;
+import com.autocare360.repo.AppointmentRepository;
+import com.autocare360.repo.UserRepository;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class AppointmentService {
+
+  private final AppointmentRepository appointmentRepository;
+  private final UserRepository userRepository;
+  private final SimpMessagingTemplate messagingTemplate;
+
+  @Transactional(readOnly = true)
+  public List<AppointmentResponse> listByUser(Long userId) {
+    List<Appointment> appointments =
+        appointmentRepository.findByUser_IdOrderByDateDescTimeDesc(userId);
+    return appointments.stream().map(this::toResponse).collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
+  public List<AppointmentResponse> listAll() {
+    List<Appointment> appointments = appointmentRepository.findAllByOrderByDateAscTimeAsc();
+    return appointments.stream().map(this::toResponse).collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
+  public List<AppointmentResponse> listByEmployeeAndStatus(Long employeeId, List<String> statuses) {
+    // Query by assigned_user_id (User table FK), not employee_id
+    List<Appointment> appointments =
+        appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
+            employeeId, statuses);
+
+    System.out.println("=== Employee Appointments Query ===");
+    System.out.println("User ID: " + employeeId);
+    System.out.println("Statuses: " + statuses);
+    System.out.println("Found " + appointments.size() + " appointments");
+
+    return appointments.stream().map(this::toResponse).collect(Collectors.toList());
+  }
+
+  @Transactional
+  public AppointmentResponse create(AppointmentRequest request) {
+    User user =
+        userRepository
+            .findById(request.getUserId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    Appointment appointment = new Appointment();
+    appointment.setUser(user);
+    appointment.setService(request.getService());
+    appointment.setVehicle(request.getVehicle());
+    appointment.setDate(request.getDate());
+    appointment.setTime(request.getTime());
+    appointment.setStatus(request.getStatus() != null ? request.getStatus() : "PENDING");
+    appointment.setNotes(request.getNotes());
+    appointment.setTechnician(request.getTechnician());
+
+    // If technician is specified, find and assign user (employee from users table)
+    if (request.getTechnician() != null && !request.getTechnician().isEmpty()) {
+      System.out.println("[AppointmentService] Looking for technician: " + request.getTechnician());
+      final Appointment appt = appointment; // Make final for lambda
+
+      // Find in User table by name
+      userRepository
+          .findByName(request.getTechnician())
+          .ifPresent(
+              employeeUser -> {
+                System.out.println(
+                    "[AppointmentService] Found user: "
+                        + employeeUser.getName()
+                        + ", ID: "
+                        + employeeUser.getId()
+                        + ", employeeNo: "
+                        + employeeUser.getEmployeeNo());
+                appt.setAssignedUser(employeeUser);
+              });
+
+      if (appointment.getAssignedUser() == null) {
+        System.out.println(
+            "[AppointmentService] WARNING: No user found with name: " + request.getTechnician());
+      }
+    }
+
+    appointment = appointmentRepository.save(appointment);
+
+    // Log after save
+    System.out.println(
+        "[AppointmentService] Appointment saved with ID: "
+            + appointment.getId()
+            + ", assignedUser: "
+            + (appointment.getAssignedUser() != null
+                ? appointment.getAssignedUser().getId()
+                : "NULL"));
+
+    // Broadcast new appointment to admin dashboard listeners
+    try {
+      AppointmentResponse resp = toResponse(appointment);
+      messagingTemplate.convertAndSend("/topic/admin-appointments", resp);
+    } catch (Exception e) {
+      // Do not fail the request if messaging fails - just log
+      // (logging framework available via Lombok? using System.err as fallback)
+      System.err.println("Failed to broadcast appointment to admins: " + e.getMessage());
+    }
+
+    return toResponse(appointment);
+  }
+
+  @Transactional
+  public AppointmentResponse update(Long id, AppointmentRequest request) {
+    Appointment appointment =
+        appointmentRepository
+            .findById(id)
+            .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+    if (request.getService() != null) appointment.setService(request.getService());
+    if (request.getVehicle() != null) appointment.setVehicle(request.getVehicle());
+    if (request.getDate() != null) appointment.setDate(request.getDate());
+    if (request.getTime() != null) appointment.setTime(request.getTime());
+    if (request.getStatus() != null) appointment.setStatus(request.getStatus());
+    if (request.getNotes() != null) appointment.setNotes(request.getNotes());
+    if (request.getTechnician() != null) {
+      appointment.setTechnician(request.getTechnician());
+      // Update assigned user if technician name is provided (users with employee_no are employees)
+      final Appointment appt = appointment; // Make final for lambda
+
+      userRepository
+          .findByName(request.getTechnician())
+          .ifPresent(
+              employeeUser -> {
+                if (employeeUser.getEmployeeNo() != null
+                    && !employeeUser.getEmployeeNo().isEmpty()) {
+                  appt.setAssignedUser(employeeUser);
+                }
+              });
+    }
+
+    appointment = appointmentRepository.save(appointment);
+    AppointmentResponse response = toResponse(appointment);
+
+    // Broadcast status update to admin dashboard
+    messagingTemplate.convertAndSend("/topic/admin-appointments", response);
+    System.out.println(
+        "Broadcasted to admin topic: " + response.getId() + " - " + response.getStatus());
+
+    // Broadcast to the specific customer if user exists
+    if (appointment.getUser() != null) {
+      String userId = appointment.getUser().getId().toString();
+      messagingTemplate.convertAndSendToUser(userId, "/queue/appointment-updates", response);
+      System.out.println(
+          "Broadcasted to user "
+              + userId
+              + " appointment: "
+              + response.getId()
+              + " - "
+              + response.getStatus());
+    } else {
+      System.out.println("No user associated with appointment " + response.getId());
+    }
+
+    return response;
+  }
+
+  @Transactional
+  public void delete(Long id) {
+    appointmentRepository.deleteById(id);
+  }
+
+  @Transactional(readOnly = true)
+  public AvailabilityResponse getAvailability(LocalDate date, String technician) {
+    AvailabilityResponse response = new AvailabilityResponse();
+
+    // Define working hours (9 AM to 5 PM with 1-hour slots)
+    List<String> allTimeSlots = generateTimeSlots();
+
+    if (technician != null && !technician.isEmpty()) {
+      // Get booked times for this specific technician
+      List<Appointment> bookedAppointments =
+          appointmentRepository.findByDateAndTechnicianAndStatusNot(date, technician, "CANCELLED");
+
+      List<String> bookedTimes =
+          bookedAppointments.stream()
+              .map(a -> a.getTime().toString().substring(0, 5))
+              .collect(Collectors.toList());
+
+      // Filter out booked times
+      List<String> availableSlots =
+          allTimeSlots.stream()
+              .filter(slot -> !bookedTimes.contains(slot))
+              .collect(Collectors.toList());
+
+      response.setTimeSlots(availableSlots);
+      response.setAvailableTechnicians(List.of(technician));
+    } else {
+      // Get all appointments for this date
+      List<Appointment> allAppointments =
+          appointmentRepository.findByDateAndTimeAndStatusNot(date, null, "CANCELLED");
+
+      // Get all users with employee_no (employees)
+      List<User> allEmployees =
+          userRepository.findAll().stream()
+              .filter(u -> u.getEmployeeNo() != null && !u.getEmployeeNo().isEmpty())
+              .collect(Collectors.toList());
+      List<String> allTechnicianNames =
+          allEmployees.stream().map(User::getName).collect(Collectors.toList());
+
+      // For each time slot, find available technicians
+      List<String> availableSlots = new ArrayList<>();
+      for (String timeSlot : allTimeSlots) {
+        LocalTime slotTime = LocalTime.parse(timeSlot + ":00");
+        List<String> busyTechnicians =
+            allAppointments.stream()
+                .filter(a -> a.getTime().equals(slotTime))
+                .map(Appointment::getTechnician)
+                .filter(t -> t != null && !t.isEmpty())
+                .collect(Collectors.toList());
+
+        // If there are available technicians for this slot, include it
+        if (busyTechnicians.size() < allTechnicianNames.size()) {
+          availableSlots.add(timeSlot);
+        }
+      }
+
+      response.setTimeSlots(availableSlots);
+      response.setAvailableTechnicians(allTechnicianNames);
+    }
+
+    return response;
+  }
+
+  private List<String> generateTimeSlots() {
+    List<String> slots = new ArrayList<>();
+    // Generate slots from 00:00 to 23:00 (24 hours) with 1-hour gap
+    for (int hour = 0; hour < 24; hour++) {
+      slots.add(String.format("%02d:00", hour));
+    }
+    return slots;
+  }
+
+  private AppointmentResponse toResponse(Appointment appointment) {
+    AppointmentResponse response = new AppointmentResponse();
+    response.setId(appointment.getId());
+    response.setService(appointment.getService());
+    response.setVehicle(appointment.getVehicle());
+    response.setDate(appointment.getDate());
+    response.setTime(appointment.getTime());
+    response.setStatus(appointment.getStatus());
+    response.setNotes(appointment.getNotes());
+    response.setTechnician(appointment.getTechnician());
+
+    if (appointment.getUser() != null) {
+      AppointmentResponse.UserInfo userInfo = new AppointmentResponse.UserInfo();
+      userInfo.setId(appointment.getUser().getId());
+      userInfo.setName(appointment.getUser().getName());
+      userInfo.setEmail(appointment.getUser().getEmail());
+      response.setUser(userInfo);
+    }
+
+    return response;
+  }
+}

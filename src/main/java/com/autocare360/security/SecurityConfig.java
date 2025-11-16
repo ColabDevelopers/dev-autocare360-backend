@@ -31,6 +31,8 @@ public class SecurityConfig {
             reg ->
                 reg.requestMatchers("/auth/**")
                     .permitAll()
+                    .requestMatchers("/actuator/health", "/actuator/info")
+                    .permitAll()
                     .requestMatchers("/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/ws/**")
