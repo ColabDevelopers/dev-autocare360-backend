@@ -5,15 +5,12 @@ services:
     image: mysql:8.0
     container_name: autocare360-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: Root123#
+      MYSQL_DATABASE: autocare360
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d
     networks:
       - autocare360-network
     healthcheck:
@@ -27,10 +24,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DB_URL: ${DB_URL}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/autocare360?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "Root123#"
+      JWT_SECRET: "tDv0mJqe2HVDry+Lf+zd1cKi9o3lakCe0Wq7yDfqa1dURHWRByX0KcV5jKVgVnPkBJb2Oz5XUqi3CE7rQSWinA=="
+      SPRING_PROFILES_ACTIVE: "prod"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+      CORS_ALLOWED_ORIGINS: "https://autocare360.vercel.app,http://localhost:3000,http://localhost:5173"
     depends_on:
       mysql:
         condition: service_healthy
@@ -43,5 +43,4 @@ volumes:
 
 networks:
   autocare360-network:
-    name: autocare360-network
     driver: bridge
