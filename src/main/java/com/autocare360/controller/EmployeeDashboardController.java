@@ -82,7 +82,7 @@ public class EmployeeDashboardController {
 
     // 1. Count active jobs (IN_PROGRESS or APPROVED)
     List<Appointment> activeJobs =
-        appointmentRepository.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
+        appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
             employeeId, Arrays.asList("IN_PROGRESS", "APPROVED"));
     Integer activeJobsCount = activeJobs.size();
     Integer jobsInProgress =
@@ -100,7 +100,7 @@ public class EmployeeDashboardController {
     LocalDate monthStart = today.withDayOfMonth(1);
     LocalDate monthEnd = today.withDayOfMonth(today.lengthOfMonth());
     Integer completedThisMonth =
-        appointmentRepository.countByAssignedEmployeeIdAndStatusAndUpdatedAtBetween(
+        appointmentRepository.countByAssignedUserIdAndStatusAndUpdatedAtBetween(
             employeeId, "COMPLETED", monthStart.atStartOfDay(), monthEnd.atTime(23, 59, 59));
     if (completedThisMonth == null) completedThisMonth = 0;
 
@@ -156,15 +156,14 @@ public class EmployeeDashboardController {
     List<Appointment> appointments;
     if (status != null) {
       appointments =
-          appointmentRepository.findByAssignedEmployee_IdAndStatusOrderByDateAscTimeAsc(
+          appointmentRepository.findByAssignedUser_IdAndStatusOrderByDateAscTimeAsc(
               employeeId, status);
     } else if (!includeCompleted) {
       appointments =
-          appointmentRepository.findByAssignedEmployee_IdAndStatusInOrderByDateAscTimeAsc(
+          appointmentRepository.findByAssignedUser_IdAndStatusInOrderByDateAscTimeAsc(
               employeeId, Arrays.asList("IN_PROGRESS", "APPROVED", "PENDING"));
     } else {
-      appointments =
-          appointmentRepository.findByAssignedEmployee_IdOrderByDateAscTimeAsc(employeeId);
+      appointments = appointmentRepository.findByAssignedUser_IdOrderByDateAscTimeAsc(employeeId);
     }
 
     // Map to DTOs
@@ -230,7 +229,7 @@ public class EmployeeDashboardController {
 
     // Fetch today's appointments
     List<Appointment> appointments =
-        appointmentRepository.findByAssignedEmployee_IdAndDateOrderByTimeAsc(employeeId, today);
+        appointmentRepository.findByAssignedUser_IdAndDateOrderByTimeAsc(employeeId, today);
 
     // Map to DTOs
     List<TodayAppointmentDTO> todayAppointments =
@@ -333,8 +332,7 @@ public class EmployeeDashboardController {
 
     // Fetch appointments in range
     List<Appointment> appointments =
-        appointmentRepository.findByAssignedEmployee_IdAndDateBetween(
-            employeeId, startDate, endDate);
+        appointmentRepository.findByAssignedUser_IdAndDateBetween(employeeId, startDate, endDate);
 
     // DEBUG: Log results
     logger.info("   Appointments Found: {}", appointments.size());
@@ -398,9 +396,9 @@ public class EmployeeDashboardController {
               .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
       // Verify employee is assigned
-      // Force load the employee relationship to check assignment
-      if (appointment.getAssignedEmployee() == null
-          || !appointment.getAssignedEmployee().getId().equals(employeeId)) {
+      // Force load the assignedUser relationship to check assignment
+      if (appointment.getAssignedUser() == null
+          || !appointment.getAssignedUser().getId().equals(employeeId)) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not assigned to this job");
       }
 
@@ -447,17 +445,20 @@ public class EmployeeDashboardController {
       // Create and save notification for customer
       String notificationTitle = "Service Update";
       String notificationMessage = createNotificationMessage(updated, request);
-      
-      Notification notification = Notification.builder()
-          .userId(updated.getUserId())
-          .type("SERVICE_UPDATE")
-          .title(notificationTitle)
-          .message(notificationMessage)
-          .data(String.format("{\"serviceId\":%d,\"status\":\"%s\",\"progress\":%d}", 
-              updated.getId(), updated.getStatus(), updated.getProgress()))
-          .isRead(false)
-          .build();
-      
+
+      Notification notification =
+          Notification.builder()
+              .userId(updated.getUserId())
+              .type("SERVICE_UPDATE")
+              .title(notificationTitle)
+              .message(notificationMessage)
+              .data(
+                  String.format(
+                      "{\"serviceId\":%d,\"status\":\"%s\",\"progress\":%d}",
+                      updated.getId(), updated.getStatus(), updated.getProgress()))
+              .isRead(false)
+              .build();
+
       notificationRepository.save(notification);
       logger.info("💾 Notification saved for customer ID: {}", updated.getUserId());
 
@@ -465,7 +466,7 @@ public class EmployeeDashboardController {
       Map<String, Object> progressUpdate = new HashMap<>();
       progressUpdate.put("type", "service_update");
       progressUpdate.put("timestamp", LocalDateTime.now().toString());
-      
+
       Map<String, Object> updateData = new HashMap<>();
       updateData.put("serviceId", updated.getId());
       updateData.put("status", updated.getStatus());
@@ -475,11 +476,12 @@ public class EmployeeDashboardController {
       updateData.put("customerId", updated.getUserId());
       updateData.put("notificationTitle", notificationTitle);
       updateData.put("notificationMessage", notificationMessage);
-      
+
       progressUpdate.put("data", updateData);
-      
+
       // Broadcast to WebSocket topic
-      logger.info("📡 Broadcasting service update to /topic/service-updates: serviceId={}, progress={}%", 
+      logger.info(
+          "📡 Broadcasting service update to /topic/service-updates: serviceId={}, progress={}%",
           updated.getId(), updated.getProgress());
       messagingTemplate.convertAndSend("/topic/service-updates", progressUpdate);
       logger.info("✅ WebSocket message sent successfully");
@@ -516,9 +518,9 @@ public class EmployeeDashboardController {
               .orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
       // Verify employee is assigned
-      // Force load the employee relationship to check assignment
-      if (appointment.getAssignedEmployee() == null
-          || !appointment.getAssignedEmployee().getId().equals(employeeId)) {
+      // Force load the assignedUser relationship to check assignment
+      if (appointment.getAssignedUser() == null
+          || !appointment.getAssignedUser().getId().equals(employeeId)) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not assigned to this job");
       }
 
@@ -555,13 +557,15 @@ public class EmployeeDashboardController {
   }
 
   // Helper method to create notification message
-  private String createNotificationMessage(Appointment appointment, UpdateJobStatusRequestDTO request) {
+  private String createNotificationMessage(
+      Appointment appointment, UpdateJobStatusRequestDTO request) {
     StringBuilder message = new StringBuilder();
-    
+
     // Service and vehicle info
-    message.append(String.format("Your %s service for %s", 
-        appointment.getService(), appointment.getVehicle()));
-    
+    message.append(
+        String.format(
+            "Your %s service for %s", appointment.getService(), appointment.getVehicle()));
+
     // Status change message
     if (request.getStatus() != null) {
       String statusMsg = "";
@@ -583,16 +587,16 @@ public class EmployeeDashboardController {
       }
       message.append(statusMsg);
     }
-    
+
     // Progress update message
     if (request.getProgress() != null && request.getStatus() == null) {
       message.append(String.format(" - Progress updated to %d%%", request.getProgress()));
     } else if (request.getProgress() != null) {
       message.append(String.format(" (%d%% complete)", request.getProgress()));
     }
-    
+
     message.append(".");
-    
+
     return message.toString();
   }
 }
