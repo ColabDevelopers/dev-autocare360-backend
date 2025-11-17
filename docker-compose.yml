@@ -23,7 +23,7 @@ services:
 
   app:
     build: .
-    container_name: autocare360-app
+    container_name: autocare360-backend
     ports:
       - "8080:8080"
     environment:
@@ -43,4 +43,5 @@ volumes:
 
 networks:
   autocare360-network:
+    name: autocare360-network
     driver: bridge
