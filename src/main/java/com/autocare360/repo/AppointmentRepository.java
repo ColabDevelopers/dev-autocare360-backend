@@ -18,6 +18,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
   // Customer queries
   List<Appointment> findByUser_IdOrderByDateDescTimeDesc(Long userId);
+  
+  // Find appointments by user ID  
+  List<Appointment> findByUser_Id(Long userId);
 
   // Employee queries - Find by assigned user (employee from users table)
   List<Appointment> findByAssignedUser_IdAndDateOrderByTimeAsc(Long userId, LocalDate date);

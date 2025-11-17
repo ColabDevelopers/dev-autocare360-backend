@@ -31,10 +31,25 @@ public class SecurityConfig {
             reg ->
                 reg.requestMatchers("/auth/**")
                     .permitAll()
+                    .requestMatchers(
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-resources/**",
+                        "/webjars/**"
+                    )
+                    .permitAll()
+                    .requestMatchers("/actuator/**")
+                    .permitAll()
+                    .requestMatchers("/error")
+                    .permitAll()
                     .requestMatchers("/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/ws/**")
                     .permitAll() // Allow WebSocket connections and SockJS
+                    .requestMatchers("/api/customer/**")
+                    .hasAnyRole("ADMIN", "CUSTOMER")
                     .requestMatchers("/api/vehicles/**")
                     .hasAnyRole("ADMIN", "CUSTOMER")
                     .anyRequest()
