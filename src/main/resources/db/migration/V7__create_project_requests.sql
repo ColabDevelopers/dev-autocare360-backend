@@ -38,15 +38,15 @@ CREATE TABLE IF NOT EXISTS project_requests (
         CHECK (project_type IN ('MODIFICATION', 'CUSTOM_WORK', 'UPGRADE', 'REPAIR'))
 );
 
--- Create indexes for better query performance
-CREATE INDEX idx_project_requests_customer_id ON project_requests(customer_id);
-CREATE INDEX idx_project_requests_status ON project_requests(status);
-CREATE INDEX idx_project_requests_assigned_employee ON project_requests(assigned_employee_id);
-CREATE INDEX idx_project_requests_created_at ON project_requests(created_at);
-CREATE INDEX idx_project_requests_project_type ON project_requests(project_type);
-CREATE INDEX idx_project_requests_priority ON project_requests(priority);
+-- Create indexes for better query performance (use IF NOT EXISTS to avoid duplicate errors)
+CREATE INDEX IF NOT EXISTS idx_project_requests_customer_id ON project_requests(customer_id);
+CREATE INDEX IF NOT EXISTS idx_project_requests_status ON project_requests(status);
+CREATE INDEX IF NOT EXISTS idx_project_requests_assigned_employee ON project_requests(assigned_employee_id);
+CREATE INDEX IF NOT EXISTS idx_project_requests_created_at ON project_requests(created_at);
+CREATE INDEX IF NOT EXISTS idx_project_requests_project_type ON project_requests(project_type);
+CREATE INDEX IF NOT EXISTS idx_project_requests_priority ON project_requests(priority);
 
 -- Create composite indexes for common query patterns
-CREATE INDEX idx_project_requests_customer_status ON project_requests(customer_id, status);
-CREATE INDEX idx_project_requests_status_created ON project_requests(status, created_at);
-CREATE INDEX idx_project_requests_employee_status ON project_requests(assigned_employee_id, status);
+CREATE INDEX IF NOT EXISTS idx_project_requests_customer_status ON project_requests(customer_id, status);
+CREATE INDEX IF NOT EXISTS idx_project_requests_status_created ON project_requests(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_project_requests_employee_status ON project_requests(assigned_employee_id, status);
