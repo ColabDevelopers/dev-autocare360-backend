@@ -35,6 +35,10 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/admin/**")
                     .hasRole("ADMIN")
+                    .requestMatchers("/api/reports/**")
+                    .permitAll()
+                    .requestMatchers("/api/admin/workload/**")
+                    .permitAll()
                     .requestMatchers("/ws/**")
                     .permitAll() // Allow WebSocket connections and SockJS
                     .requestMatchers("/api/vehicles/**")

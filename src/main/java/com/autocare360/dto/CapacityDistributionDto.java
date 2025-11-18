@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 public class CapacityDistributionDto {
     private Long employeeId;
     private String name;
-    private String department;
+    /** Capacity utilisation for this employee, as a percentage 0–100 */
     private Double capacityPercentage;
-    private String status; // AVAILABLE, BUSY, OVERLOADED
-    private Integer activeTaskCount;
+    /** Hex color used by the chart (frontend can override if needed) */
+    private String color;
 }

@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TeamStatusDto {
-    private Integer available;
-    private Integer busy;
-    private Integer overloaded;
-    private Integer total;
+    /** Total employees considered in workload monitoring */
+    private int total;
+    private int availableCount;
+    private int busyCount;
+    private int overloadedCount;
 }
