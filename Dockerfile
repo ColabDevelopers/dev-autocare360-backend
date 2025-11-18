@@ -1,30 +1,29 @@
-# Stage 1: Build
-FROM maven:3.9-eclipse-temurin-21-alpine AS builder
+# ---------- STAGE 1: Build ----------
+FROM maven:3.9-eclipse-temurin-21 AS builder
 WORKDIR /app
 
-# Copy pom.xml and download dependencies
+# Cache dependencies
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN mvn -B -q dependency:go-offline
 
-# Copy source code and build
-COPY src ./src
-RUN mvn clean package -DskipTests
+# Copy the rest of the project
+COPY . .
+RUN mvn -B -q clean package -DskipTests
 
-# Stage 2: Runtime
+
+# ---------- STAGE 2: Runtime ----------
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Create non-root user
 RUN addgroup --system spring && adduser --system spring --ingroup spring
-USER spring:spring
+USER spring
 
-# Copy JAR
+# Copy final jar
 COPY --from=builder /app/target/*.jar app.jar
 
-# Optional: health check (without curl)
+# Health check (no curl)
 HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
-# Expose port
 EXPOSE 8080
-# Run the application
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
