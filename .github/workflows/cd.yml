@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   workflow_dispatch:
 
 jobs:
@@ -37,7 +38,7 @@ jobs:
             
       - name: Create deployment notification
         run: |
-          echo "### Deployment Triggered 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Triggered" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Repository:** Backend (dev-autocare360-backend)" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
