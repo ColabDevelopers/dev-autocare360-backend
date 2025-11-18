@@ -3,26 +3,33 @@ package com.autocare360.service;
 import com.autocare360.dto.CreateEmployeeRequest;
 import com.autocare360.dto.EmployeeResponse;
 import com.autocare360.dto.UpdateEmployeeRequest;
+import com.autocare360.entity.Employee;
 import com.autocare360.entity.Role;
 import com.autocare360.entity.User;
 import com.autocare360.exception.ConflictException;
+import com.autocare360.repo.EmployeeRepository;
 import com.autocare360.repo.RoleRepository;
 import com.autocare360.repo.UserRepository;
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeeService {
 
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
   private final PasswordEncoder passwordEncoder;
+  private final EmployeeRepository employeeRepository;
 
   @Transactional
   public EmployeeResponse create(CreateEmployeeRequest request) {
@@ -47,6 +54,22 @@ public class EmployeeService {
             .build();
     user.getRoles().add(employeeRole);
     User saved = userRepository.save(user);
+    
+    // Also save to employees table for project assignment compatibility
+    log.info("Creating employee record in employees table for user: {} - {}", saved.getId(), saved.getName());
+    Employee employee = new Employee();
+    employee.setName(saved.getName());
+    employee.setEmail(saved.getEmail());
+    employee.setPhoneNumber(saved.getPhone());
+    employee.setSpecialization("General Mechanic"); // Default specialization
+    employee.setStatus("ACTIVE");
+    employee.setHireDate(LocalDate.now());
+    employee.setCreatedAt(LocalDateTime.now());
+    employee.setUpdatedAt(LocalDateTime.now());
+    
+    Employee savedEmployee = employeeRepository.save(employee);
+    log.info("Employee record created in employees table with ID: {} for user: {}", savedEmployee.getId(), saved.getId());
+    
     return toResponse(saved);
   }
 
