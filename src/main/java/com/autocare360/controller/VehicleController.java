@@ -103,14 +103,20 @@ public class VehicleController {
     Long userId = extractUserId(auth);
     if (userId == null) return ResponseEntity.status(401).build();
 
+    // Auto-generate VIN if not provided
+    String vin = dto.getVin();
+    if (vin == null || vin.trim().isEmpty()) {
+      vin = "VIN-" + System.currentTimeMillis() + "-" + userId;
+    }
+
     // prevent duplicate VIN for the same user
-    if (vehicleService.existsByVinAndUserId(dto.getVin(), userId)) {
+    if (vehicleService.existsByVinAndUserId(vin, userId)) {
       return ResponseEntity.status(HttpStatus.CONFLICT)
           .body(Map.of("error", "You already have a vehicle with this VIN"));
     }
 
     Vehicle v = new Vehicle();
-    v.setVin(dto.getVin());
+    v.setVin(vin);
     v.setMake(dto.getMake());
     v.setModel(dto.getModel());
     v.setYear(dto.getYear());
