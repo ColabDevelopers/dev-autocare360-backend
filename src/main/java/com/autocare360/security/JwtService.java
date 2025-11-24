@@ -10,10 +10,12 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class JwtService {
 
   @Value("${app.security.jwt.secret}")
@@ -43,9 +45,10 @@ public class JwtService {
   public boolean isTokenValid(String token) {
     try {
       Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
+      log.debug("✅ JWT token validation successful");
       return true;
     } catch (Exception e) {
-      System.out.println("Token invalid: " + e.getMessage());
+      log.warn("❌ JWT token validation failed: {} - {}", e.getClass().getSimpleName(), e.getMessage());
       return false;
     }
   }
